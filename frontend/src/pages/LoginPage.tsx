@@ -1,15 +1,15 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react'
-import AuthLayout from '../components/AuthLayout'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Lock, Mail, ShieldCheck } from "lucide-react";
+import AuthLayout from "../components/AuthLayout";
 
 function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [maintainSession, setMaintainSession] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [maintainSession, setMaintainSession] = useState(false);
 
   function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
+    event.preventDefault();
     // TODO: integrar com autenticação no backend quando estiver disponível.
   }
 
@@ -48,9 +48,12 @@ function LoginPage() {
                   htmlFor="password"
                   className="text-xs font-bold uppercase tracking-wide text-slate-700"
                 >
-                  Credencial de Segurança
+                  Senha
                 </label>
-                <a href="#" className="text-xs font-medium text-slate-500 hover:text-slate-900">
+                <a
+                  href="#"
+                  className="text-xs font-medium text-slate-500 hover:text-slate-900"
+                >
                   Esqueceu?
                 </a>
               </div>
@@ -82,7 +85,7 @@ function LoginPage() {
               type="submit"
               className="flex w-full items-center justify-center gap-2 rounded-md bg-slate-900 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Autenticar
+              Entrar
               <ArrowRight className="h-4 w-4" />
             </button>
           </form>
@@ -95,13 +98,16 @@ function LoginPage() {
 
         <div className="py-4 text-center text-sm">
           <span className="text-slate-500">Precisa de acesso? </span>
-          <Link to="/register" className="font-semibold text-slate-900 hover:underline">
+          <Link
+            to="/register"
+            className="font-semibold text-slate-900 hover:underline"
+          >
             Solicitar ao Administrador do Sistema
           </Link>
         </div>
       </div>
     </AuthLayout>
-  )
+  );
 }
 
-export default LoginPage
+export default LoginPage;

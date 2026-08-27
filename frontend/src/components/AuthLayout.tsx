@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import Logo from './Logo'
+import type { ReactNode } from "react";
+import Logo from "./Logo";
 
 function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -7,7 +7,7 @@ function AuthLayout({ children }: { children: ReactNode }) {
       className="flex min-h-screen flex-col bg-white bg-[size:24px_24px] text-slate-900"
       style={{
         backgroundImage:
-          'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)',
+          "linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)",
       }}
     >
       <main className="flex flex-1 flex-col items-center px-4 py-12">
@@ -24,7 +24,7 @@ function AuthLayout({ children }: { children: ReactNode }) {
         <div className="mt-8 w-full max-w-md">{children}</div>
       </main>
 
-      <footer className="flex flex-col items-center gap-2 border-t border-slate-200 px-6 py-4 text-xs text-slate-500 sm:flex-row sm:justify-between">
+      {/* <footer className="flex flex-col items-center gap-2 border-t border-slate-200 px-6 py-4 text-xs text-slate-500 sm:flex-row sm:justify-between">
         <p>© 2024 VisionHub AI. Precisão em Missão Crítica.</p>
         <nav className="flex gap-4 font-medium text-slate-700">
           <a href="#" className="hover:text-slate-900">
@@ -40,9 +40,9 @@ function AuthLayout({ children }: { children: ReactNode }) {
             Suporte
           </a>
         </nav>
-      </footer>
+      </footer> */}
     </div>
-  )
+  );
 }
 
-export default AuthLayout
+export default AuthLayout;

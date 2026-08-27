@@ -1,16 +1,16 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Lock } from 'lucide-react'
-import AuthLayout from '../components/AuthLayout'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Lock } from "lucide-react";
+import AuthLayout from "../components/AuthLayout";
 
 function RegisterPage() {
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [condominium, setCondominium] = useState('')
-  const [message, setMessage] = useState('')
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [condominium, setCondominium] = useState("");
+  const [message, setMessage] = useState("");
 
   function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
+    event.preventDefault();
     // TODO: enviar solicitação de acesso ao backend quando estiver disponível.
   }
 
@@ -19,7 +19,9 @@ function RegisterPage() {
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col items-center bg-slate-50 px-6 py-6 text-center">
           <Lock className="h-6 w-6 text-slate-500" />
-          <h2 className="mt-2 font-serif text-xl font-bold">Solicitar Acesso</h2>
+          <h2 className="mt-2 font-serif text-xl font-bold">
+            Solicitar Acesso
+          </h2>
           <p className="mt-1 text-sm text-slate-500">
             Peça ao administrador para liberar seu acesso ao VisionHub AI.
           </p>
@@ -104,7 +106,10 @@ function RegisterPage() {
           </button>
 
           <p className="text-center text-sm">
-            <Link to="/login" className="font-semibold text-slate-900 hover:underline">
+            <Link
+              to="/login"
+              className="font-semibold text-slate-900 hover:underline"
+            >
               Já tem uma conta? Entrar
             </Link>
           </p>
@@ -116,7 +121,7 @@ function RegisterPage() {
         </div>
       </div>
     </AuthLayout>
-  )
+  );
 }
 
-export default RegisterPage
+export default RegisterPage;

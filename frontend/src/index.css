@@ -1,8 +1,8 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @theme {
-  --font-serif: Georgia, 'Times New Roman', Times, serif;
-  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: Georgia, "Times New Roman", Times, serif;
+  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
