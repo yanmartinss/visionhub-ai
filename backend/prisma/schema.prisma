@@ -12,10 +12,16 @@ datasource db {
   provider = "postgresql"
 }
 
-model Users {
-  id uuid()
+enum Role {
+  manager
+  gatekeeper
+  admin
+}
+
+model User {
+  id           String @id @default(uuid())
   name         String
   email        String @unique
   passwordHash String
-  role enum("manager", "gatekeeper", "admin")
+  role         Role
 }
