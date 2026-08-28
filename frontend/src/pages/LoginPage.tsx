@@ -15,7 +15,7 @@ function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="p-6">
           <h2 className="font-serif text-xl font-bold">Controle de Acesso</h2>
           <div className="mt-4 border-t border-slate-200" />

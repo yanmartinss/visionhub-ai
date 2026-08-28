@@ -10,7 +10,7 @@ function AuthLayout({ children }: { children: ReactNode }) {
           "linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)",
       }}
     >
-      <main className="flex flex-1 flex-col items-center px-4 py-12">
+      <main className="flex flex-1 flex-col items-center px-4 py-10">
         <div className="flex flex-col items-center">
           <Logo className="h-11 w-11 text-slate-900" />
           <h1 className="mt-3 font-serif text-3xl font-bold tracking-tight">

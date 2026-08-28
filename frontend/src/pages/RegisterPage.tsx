@@ -16,7 +16,7 @@ function RegisterPage() {
 
   return (
     <AuthLayout>
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col items-center bg-slate-50 px-6 py-6 text-center">
           <Lock className="h-6 w-6 text-slate-500" />
           <h2 className="mt-2 font-serif text-xl font-bold">
