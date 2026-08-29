@@ -14,14 +14,34 @@ datasource db {
 
 enum Role {
   manager
-  gatekeeper
+  employee
   admin
 }
 
 model User {
-  id           String @id @default(uuid())
+  id           String   @id @default(uuid())
   name         String
-  email        String @unique
+  email        String   @unique
+  active       Boolean  @default(true)
   passwordHash String
-  role         Role
+  role         Role     @default(employee)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+enum StatusRequest {
+  pending
+  approved
+  rejected
+}
+
+model Request {
+  id          String        @id @default(uuid())
+  name        String
+  email       String
+  condominium String
+  message     String?
+  status      StatusRequest @default(pending)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
 }

@@ -4,7 +4,7 @@ import Logo from "./Logo";
 function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div
-      className="flex min-h-screen flex-col bg-white bg-[size:24px_24px] text-slate-900"
+      className="flex min-h-screen flex-col bg-white bg-size-[24px_24px] text-slate-900"
       style={{
         backgroundImage:
           "linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)",

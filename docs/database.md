@@ -25,13 +25,13 @@ Database: **PostgreSQL**
 
 ### `rules`
 
-| Field            | Type                   | Description                                                        |
-| ---------------- | ---------------------- | ------------------------------------------------------------------ |
-| id               | UUID (PK)              | Rule identifier                                                    |
-| cameraId         | UUID (FK → cameras.id) | Associated camera                                                  |
-| eventType        | TEXT                   | `gateOpen` \| `occupancy` \| `restrictedArea` \| `abandonedObject` |
-| timeLimitSeconds | INTEGER                | Configured time limit (when applicable)                            |
-| active           | BOOLEAN                | Whether the rule is active                                         |
+| Field            | Type                   | Description                                                                   |
+| ---------------- | ---------------------- | ----------------------------------------------------------------------------- |
+| id               | UUID (PK)              | Rule identifier                                                               |
+| cameraId         | UUID (FK → cameras.id) | Associated camera                                                             |
+| eventType        | TEXT                   | `gateOpen` \| `occupancy` \| `restrictedArea` \| `abandonedObject` \| `other` |
+| timeLimitSeconds | INTEGER                | Configured time limit (when applicable)                                       |
+| active           | BOOLEAN                | Whether the rule is active                                                    |
 
 ### `events`
 
@@ -65,13 +65,13 @@ Database: **PostgreSQL**
 
 ### `users`
 
-| Field        | Type          | Description                          |
-| ------------ | ------------- | ------------------------------------ |
-| id           | UUID (PK)     | User identifier                      |
-| name         | TEXT          | User name                            |
-| email        | TEXT (UNIQUE) | Login email                          |
-| passwordHash | TEXT          | Hashed password                      |
-| role         | TEXT          | `manager` \| `gatekeeper` \| `admin` |
+| Field        | Type          | Description                         |
+| ------------ | ------------- | ----------------------------------- |
+| id           | UUID (PK)     | User identifier                     |
+| name         | TEXT          | User name                           |
+| email        | TEXT (UNIQUE) | Login email                         |
+| passwordHash | TEXT          | Hashed password                     |
+| role         | TEXT          | `manager` \| `employees` \| `admin` |
 
 ## Relationships (summary)
 

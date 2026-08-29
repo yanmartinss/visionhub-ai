@@ -3,6 +3,7 @@ import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { routes } from "./routes/main";
+import { apiLimiter } from "./middleware/rate-limit";
 
 const server = express();
 
@@ -11,7 +12,7 @@ server.use(cors());
 server.use(cookieParser());
 server.use(express.static("public"));
 server.use(express.json());
-server.use("/api", routes);
+server.use("/api", apiLimiter, routes);
 
 server.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
