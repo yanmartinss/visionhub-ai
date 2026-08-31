@@ -1,10 +1,11 @@
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { routes } from "./routes/main";
-import { apiLimiter } from "./middleware/rate-limit";
-import { AppError } from "./lib/app-error";
+import { routes } from "./routes/main.ts";
+import { apiLimiter } from "./middleware/rate-limit.ts";
+import { AppError } from "./lib/app-error.ts";
 
 const server = express();
 

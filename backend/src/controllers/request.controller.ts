@@ -30,7 +30,11 @@ export const listRequests: RequestHandler = async (_req, res, next) => {
   }
 };
 
-export const approveRequest: RequestHandler = async (req, res, next) => {
+export const approveRequest: RequestHandler<{ id: string }> = async (
+  req,
+  res,
+  next,
+) => {
   try {
     const result = await requestService.approveRequest(req.params.id);
     return res.json(result);
@@ -39,7 +43,11 @@ export const approveRequest: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const rejectRequest: RequestHandler = async (req, res, next) => {
+export const rejectRequest: RequestHandler<{ id: string }> = async (
+  req,
+  res,
+  next,
+) => {
   try {
     const result = await requestService.rejectRequest(req.params.id);
     return res.json(result);
