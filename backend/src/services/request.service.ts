@@ -84,8 +84,7 @@ export async function approveRequest(id: string) {
   const loginUrl = `${process.env.APP_URL ?? "http://localhost:5173"}/login`;
   const mail = await sendTempPassword(request.email, tempPassword, loginUrl);
 
-  // tempPassword sempre volta: o admin mostra na tela, o e-mail é só um extra.
-  return { ...updated, emailDelivered: mail.delivered, tempPassword };
+  return { ...updated, emailDelivered: mail.delivered };
 }
 
 export async function rejectRequest(id: string) {
