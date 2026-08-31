@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Lock, Mail, ShieldCheck } from "lucide-react";
+import { ArrowRight, Mail, ShieldCheck } from "lucide-react";
 import AuthLayout from "../components/AuthLayout";
+import PasswordInput from "../components/PasswordInput";
 import { ApiError } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -80,18 +81,14 @@ function LoginPage() {
                   Esqueceu?
                 </a>
               </div>
-              <div className="relative mt-1.5">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-slate-500 focus:outline-none"
-                />
-              </div>
+              <PasswordInput
+                id="password"
+                value={password}
+                onChange={setPassword}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                withLockIcon
+              />
             </div>
 
             <label className="flex items-center gap-2 text-sm text-slate-600">

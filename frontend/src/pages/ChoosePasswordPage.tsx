@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { KeyRound } from "lucide-react";
 import AuthLayout from "../components/AuthLayout";
+import PasswordInput from "../components/PasswordInput";
 import { apiFetch, ApiError } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -60,13 +61,11 @@ function ChoosePasswordPage() {
             >
               Nova Senha
             </label>
-            <input
+            <PasswordInput
               id="newPassword"
-              type="password"
-              autoComplete="new-password"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              onChange={setNewPassword}
+              autoComplete="new-password"
             />
           </div>
 
@@ -77,13 +76,11 @@ function ChoosePasswordPage() {
             >
               Confirmar Senha
             </label>
-            <input
+            <PasswordInput
               id="confirm"
-              type="password"
-              autoComplete="new-password"
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              onChange={setConfirm}
+              autoComplete="new-password"
             />
           </div>
 
