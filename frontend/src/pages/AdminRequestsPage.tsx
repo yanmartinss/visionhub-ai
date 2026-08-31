@@ -17,7 +17,6 @@ type ApproveResult = {
   id: string;
   status: string;
   emailDelivered: boolean;
-  tempPassword: string;
 };
 
 const STATUS_LABELS: Record<AccessRequest["status"], string> = {
@@ -84,8 +83,8 @@ function AdminRequestsPage() {
       if (action === "approve") {
         setNotice(
           res.emailDelivered
-            ? `Aprovado. Senha temporária: ${res.tempPassword} — também enviada por e-mail.`
-            : `Aprovado. Senha temporária: ${res.tempPassword} — copie e repasse (e-mail não enviado).`
+            ? "Aprovado. A senha temporária foi enviada por e-mail ao solicitante."
+            : "Aprovado, mas o e-mail com a senha temporária não pôde ser enviado. Verifique a configuração de e-mail."
         );
       }
       await load();
