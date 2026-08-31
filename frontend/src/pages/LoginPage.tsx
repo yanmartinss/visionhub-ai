@@ -1,16 +1,39 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Lock, Mail, ShieldCheck } from "lucide-react";
 import AuthLayout from "../components/AuthLayout";
+import { ApiError } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [maintainSession, setMaintainSession] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    // TODO: integrar com autenticação no backend quando estiver disponível.
+    setError(null);
+    setSubmitting(true);
+    try {
+      const user = await login(email, password);
+      if (user.mustChangePassword) {
+        navigate("/choose-password", { replace: true });
+      } else if (user.role === "admin") {
+        navigate("/admin/requests", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Não foi possível entrar.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -81,11 +104,14 @@ function LoginPage() {
               Manter Sessão
             </label>
 
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-md bg-slate-900 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              disabled={submitting}
+              className="flex w-full items-center justify-center gap-2 rounded-md bg-slate-900 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
             >
-              Entrar
+              {submitting ? "Entrando…" : "Entrar"}
               <ArrowRight className="h-4 w-4" />
             </button>
           </form>
