@@ -46,3 +46,34 @@ model Request {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @default(now()) @updatedAt
 }
+
+model Camera {
+  id        String   @id @default(uuid())
+  name      String
+  location  String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+enum AreaType {
+  restricted
+  sensitive
+}
+
+model Area {
+  id   String   @id @default(uuid())
+  type AreaType
+}
+
+model Rule {
+  id String @id @default(uuid())
+}
+
+model Event {
+  id String @id @default(uuid())
+}
+
+model Alert {
+  id String @id @default(uuid())
+}
