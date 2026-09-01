@@ -54,6 +54,10 @@ model Camera {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+
+  areas  Area[]
+  rules  Rule[]
+  events Event[]
 }
 
 enum AreaType {
@@ -62,18 +66,65 @@ enum AreaType {
 }
 
 model Area {
-  id   String   @id @default(uuid())
-  type AreaType
+  id        String   @id @default(uuid())
+  type      AreaType
+  cameraId  String
+  polygon   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  camera Camera @relation(fields: [cameraId], references: [id])
+}
+
+enum EventType {
+  gateOpen
+  occupancy
+  restrictedArea
+  abandonedObject
+  other
 }
 
 model Rule {
-  id String @id @default(uuid())
+  id               String    @id @default(uuid())
+  cameraId         String
+  eventType        EventType
+  timeLimitSeconds Int?
+  active           Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+
+  camera Camera @relation(fields: [cameraId], references: [id])
 }
 
 model Event {
-  id String @id @default(uuid())
+  id                   String    @id @default(uuid())
+  cameraId             String
+  type                 EventType
+  technicalDescription String?
+  startedAt            DateTime
+  endedAt              DateTime?
+  createdAt            DateTime  @default(now())
+
+  camera Camera  @relation(fields: [cameraId], references: [id])
+  alerts Alert[]
+
+  @@index([cameraId, startedAt])
 }
 
 model Alert {
-  id String @id @default(uuid())
+  id        String    @id @default(uuid())
+  eventId   String
+  sentAt    DateTime
+  viewedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+model DailySummary {
+  id            String   @id @default(uuid())
+  referenceDate DateTime @db.Date
+  generatedText String
+  createdAt     DateTime @default(now())
 }

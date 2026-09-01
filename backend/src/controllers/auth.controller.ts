@@ -8,7 +8,6 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   sameSite: "lax",
   secure: process.env.NODE_ENV === "production",
-  maxAge: SEVEN_DAYS_MS,
   path: "/",
 };
 
@@ -22,8 +21,13 @@ export const login: RequestHandler = async (req, res, next) => {
     const { token, user } = await authService.login(
       result.data.email,
       result.data.password,
+      result.data.maintainSession,
     );
-    res.cookie("token", token, cookieOptions);
+
+    res.cookie("token", token, {
+      ...cookieOptions,
+      maxAge: result.data.maintainSession ? SEVEN_DAYS_MS : undefined,
+    });
     return res.json(user);
   } catch (err) {
     next(err);

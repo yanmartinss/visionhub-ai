@@ -3,7 +3,11 @@ import { prisma } from "../lib/prisma.ts";
 import { AppError } from "../lib/app-error.ts";
 import { signToken } from "../lib/jwt.ts";
 
-export async function login(email: string, password: string) {
+export async function login(
+  email: string,
+  password: string,
+  maintainSession: boolean,
+) {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) throw new AppError(401, "E-mail ou senha inválidos");
@@ -13,7 +17,7 @@ export async function login(email: string, password: string) {
 
   if (!user.active) throw new AppError(403, "Conta desativada");
 
-  const token = signToken(user.id);
+  const token = signToken(user.id, maintainSession);
 
   return {
     token,

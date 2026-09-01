@@ -20,7 +20,7 @@ function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const user = await login(email, password);
+      const user = await login(email, password, maintainSession);
       if (user.mustChangePassword) {
         navigate("/choose-password", { replace: true });
       } else if (user.role === "admin") {
@@ -74,12 +74,12 @@ function LoginPage() {
                 >
                   Senha
                 </label>
-                <a
-                  href="#"
+                <Link
+                  to="/forgot-password"
                   className="text-xs font-medium text-slate-500 hover:text-slate-900"
                 >
                   Esqueceu?
-                </a>
+                </Link>
               </div>
               <PasswordInput
                 id="password"

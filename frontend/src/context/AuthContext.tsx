@@ -20,7 +20,11 @@ export type User = {
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (
+    email: string,
+    password: string,
+    maintainSession: boolean,
+  ) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -59,14 +63,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const me = await apiFetch<User>("/login", {
-      method: "POST",
-      body: { email, password },
-    });
-    setUser(me);
-    return me;
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string, maintainSession: boolean) => {
+      const me = await apiFetch<User>("/login", {
+        method: "POST",
+        body: { email, password, maintainSession },
+      });
+      setUser(me);
+      return me;
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     await apiFetch("/logout", { method: "POST" });

@@ -4,12 +4,12 @@ import { AppError } from "./app-error.ts";
 const secret = process.env.JWT_SECRET;
 if (!secret) throw new Error("JWT_SECRET não definido no .env");
 
-const EXPIRES_IN = "7d";
-
 export type TokenPayload = { sub: string };
 
-export function signToken(userId: string): string {
-  return jwt.sign({ sub: userId }, secret as string, { expiresIn: EXPIRES_IN });
+export function signToken(userId: string, maintainSession: boolean): string {
+  return jwt.sign({ sub: userId }, secret as string, {
+    expiresIn: maintainSession ? "7d" : "2h",
+  });
 }
 
 export function verifyToken(token: string): TokenPayload {
