@@ -19,15 +19,17 @@ enum Role {
 }
 
 model User {
-  id                 String   @id @default(uuid())
-  name               String
-  email              String   @unique
-  active             Boolean  @default(true)
-  passwordHash       String
-  role               Role     @default(employee)
-  mustChangePassword Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @default(now()) @updatedAt
+  id                  String    @id @default(uuid())
+  name                String
+  email               String    @unique
+  active              Boolean   @default(true)
+  passwordHash        String
+  role                Role      @default(employee)
+  mustChangePassword  Boolean   @default(false)
+  resetTokenHash      String?   @unique
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @default(now()) @updatedAt
 }
 
 enum StatusRequest {
