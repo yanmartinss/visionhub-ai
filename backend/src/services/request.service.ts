@@ -1,9 +1,9 @@
-import { randomBytes } from "crypto";
 import { hash } from "bcryptjs";
 import { prisma } from "../lib/prisma.ts";
 import { AppError } from "../lib/app-error.ts";
 import { sendTempPassword } from "../lib/mailer.ts";
 import type { RequestInput } from "../schemas/request-schema.ts";
+import { generateRandomSequence } from "../lib/generate-random-sequence.ts";
 
 const COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000; // 3 dias
 const SALT_ROUNDS = 10;
@@ -38,10 +38,6 @@ export async function listRequests() {
   return prisma.request.findMany({ orderBy: { createdAt: "desc" } });
 }
 
-function generateTempPassword() {
-  return randomBytes(9).toString("base64url"); // ~12 chars
-}
-
 /**
  * Aprova uma solicitação: cria o User (employee, ativo, com senha temporária que
  * precisa ser trocada) e marca a Request como approved. Manda a senha por e-mail.
@@ -60,7 +56,7 @@ export async function approveRequest(id: string) {
     throw new AppError(409, "Já existe um usuário com esse e-mail");
   }
 
-  const tempPassword = generateTempPassword();
+  const tempPassword = generateRandomSequence();
   const passwordHash = await hash(tempPassword, SALT_ROUNDS);
 
   const [, updated] = await prisma.$transaction([

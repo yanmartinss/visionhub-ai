@@ -22,5 +22,5 @@ export const requestLimiter = rateLimit({
   limit: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Muitas solicitações. Tente novamente mais tarde." },
+  message: { error: "Too many attempts, please try again later" },
 });

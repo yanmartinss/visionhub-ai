@@ -15,6 +15,12 @@ routes.get("/ping", (_req, res) => {
 routes.post("/requests", requestLimiter, requestController.requestRegistration);
 routes.post("/login", authLimiter, authController.login);
 routes.post("/logout", authController.logout);
+routes.post(
+  "/auth/forgot-password",
+  requestLimiter,
+  authController.forgotPassword,
+);
+routes.post("/auth/reset-password", authLimiter, authController.resetPassword);
 
 routes.get("/me", requireAuth, authController.me);
 routes.patch("/users/me/password", requireAuth, userController.changePassword);

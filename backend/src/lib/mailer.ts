@@ -60,3 +60,37 @@ export async function sendTempPassword(
     return { delivered: false, tempPassword };
   }
 }
+
+export const sendPasswordReset = async (
+  to: string,
+  resetUrl: string,
+): Promise<boolean> => {
+  const text =
+    `Você solicitou a redefinição de senha para sua conta no VisionHub AI.\n\n` +
+    `Clique no link abaixo para redefinir sua senha:\n` +
+    `${resetUrl}\n\n` +
+    `Se você não solicitou a redefinição de senha, ignore este e-mail.`;
+
+  if (!transporter) {
+    console.log(
+      `[mailer] SMTP não configurado. Link de redefinição de senha para ${to}: ${resetUrl}`,
+    );
+    return false;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: MAIL_FROM || "VisionHub AI <no-reply@visionhub.ai>",
+      to,
+      subject: "Redefinição de senha — VisionHub AI",
+      text,
+    });
+    return true;
+  } catch (err) {
+    console.error(
+      `[mailer] Falha ao enviar e-mail para ${to}:`,
+      err instanceof Error ? err.message : err,
+    );
+    return false;
+  }
+};
