@@ -39,7 +39,7 @@ export async function listRequests() {
 }
 
 /**
- * Aprova uma solicitação: cria o User (employee, ativo, com senha temporária que
+ * Aprova uma solicitação: cria o User (manager, ativo, com senha temporária que
  * precisa ser trocada) e marca a Request como approved. Manda a senha por e-mail.
  */
 export async function approveRequest(id: string) {
@@ -65,7 +65,7 @@ export async function approveRequest(id: string) {
         name: request.name,
         email: request.email,
         passwordHash,
-        role: "employee",
+        role: "manager",
         active: true,
         mustChangePassword: true,
       },
