@@ -1,4 +1,4 @@
-import { compare } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 import { prisma } from "../lib/prisma.ts";
 import { AppError } from "../lib/app-error.ts";
 import { signToken } from "../lib/jwt.ts";
@@ -7,6 +7,7 @@ import { createHash } from "crypto";
 import { sendPasswordReset } from "../lib/mailer.ts";
 
 const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+const SALT_ROUNDS = 10;
 
 export async function login(
   email: string,
@@ -54,4 +55,22 @@ export const forgotPassword = async (email: string) => {
   await sendPasswordReset(user.email, loginReset);
 };
 
-export const resetPassword = async (token: string, newPassword: string) => {};
+export const resetPassword = async (token: string, newPassword: string) => {
+  const hashToken = createHash("sha256").update(token).digest("hex");
+  const user = await prisma.user.findUnique({
+    where: { resetTokenHash: hashToken },
+  });
+  if (
+    !user ||
+    !user.resetTokenExpiresAt ||
+    user.resetTokenExpiresAt < new Date()
+  ) {
+    throw new AppError(400, "Token inválido ou expirado");
+  }
+
+  const passwordHash = await hash(newPassword, SALT_ROUNDS);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash, resetTokenHash: null, resetTokenExpiresAt: null },
+  });
+};

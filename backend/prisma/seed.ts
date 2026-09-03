@@ -2,6 +2,8 @@ import "dotenv/config";
 import { prisma } from "../src/lib/prisma.ts";
 import { hash } from "bcryptjs";
 
+const SALT_ROUNDS = 10;
+
 async function main() {
   const email = process.env.SEED_ADMIN_EMAIL;
   const password = process.env.SEED_ADMIN_PASSWORD;
@@ -9,7 +11,7 @@ async function main() {
   if (email && password) {
     const name = "mainAdmin";
 
-    const passwordHash = await hash(password, 10);
+    const passwordHash = await hash(password, SALT_ROUNDS);
 
     await prisma.user.upsert({
       where: { email },
