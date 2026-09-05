@@ -1,12 +1,11 @@
-import { hash } from "bcryptjs";
 import { prisma } from "../lib/prisma.ts";
 import { AppError } from "../lib/app-error.ts";
-import { sendTempPassword } from "../lib/mailer.ts";
 import type { RequestInput } from "../schemas/request-schema.ts";
-import { generateRandomSequence } from "../lib/generate-random-sequence.ts";
+import { createUser } from "./user.service.ts";
+import { createUserSchema } from "../schemas/create-user-schema.ts";
+import { ensureCondominium } from "./condominium.service.ts";
 
 const COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000; // 3 dias
-const SALT_ROUNDS = 10;
 
 export async function createRequest(data: RequestInput) {
   const last = await prisma.request.findFirst({
@@ -38,10 +37,6 @@ export async function listRequests() {
   return prisma.request.findMany({ orderBy: { createdAt: "desc" } });
 }
 
-/**
- * Aprova uma solicitação: cria o User (manager, ativo, com senha temporária que
- * precisa ser trocada) e marca a Request como approved. Manda a senha por e-mail.
- */
 export async function approveRequest(id: string) {
   const request = await prisma.request.findUnique({ where: { id } });
   if (!request) throw new AppError(404, "Solicitação não encontrada");
@@ -49,38 +44,22 @@ export async function approveRequest(id: string) {
     throw new AppError(409, `Solicitação já está como "${request.status}"`);
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email: request.email },
+  const { emailDelivered } = await createUser(
+    request.name,
+    request.email,
+    "manager",
+    true,
+  );
+
+  await ensureCondominium(request.condominium);
+
+  const updated = await prisma.request.update({
+    where: { id },
+    data: { status: "approved" },
+    select: { id: true, status: true },
   });
-  if (existingUser) {
-    throw new AppError(409, "Já existe um usuário com esse e-mail");
-  }
 
-  const tempPassword = generateRandomSequence();
-  const passwordHash = await hash(tempPassword, SALT_ROUNDS);
-
-  const [, updated] = await prisma.$transaction([
-    prisma.user.create({
-      data: {
-        name: request.name,
-        email: request.email,
-        passwordHash,
-        role: "manager",
-        active: true,
-        mustChangePassword: true,
-      },
-    }),
-    prisma.request.update({
-      where: { id },
-      data: { status: "approved" },
-      select: { id: true, status: true },
-    }),
-  ]);
-
-  const loginUrl = `${process.env.APP_URL ?? "http://localhost:5173"}/login`;
-  const mail = await sendTempPassword(request.email, tempPassword, loginUrl);
-
-  return { ...updated, emailDelivered: mail.delivered };
+  return { ...updated, emailDelivered };
 }
 
 export async function rejectRequest(id: string) {

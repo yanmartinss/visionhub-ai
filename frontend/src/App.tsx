@@ -1,13 +1,15 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ChoosePasswordPage from "./pages/ChoosePasswordPage";
 import DashboardPage from "./pages/DashboardPage";
-import AdminRequestsPage from "./pages/AdminRequestsPage";
+import CreateUserPage from "./pages/CreateUserPage";
+import SettingsPage from "./pages/SettingsPage";
 import RequireAuth from "./components/RequireAuth";
-import RequireAdmin from "./components/RequireAdmin";
+import RequireManager from "./components/RequireManager";
+import AppLayout from "./components/AppLayout";
 
 function App() {
   return (
@@ -26,24 +28,27 @@ function App() {
           </RequireAuth>
         }
       />
+
       <Route
-        path="/dashboard"
         element={
           <RequireAuth>
-            <DashboardPage />
+            <AppLayout>
+              <Outlet />
+            </AppLayout>
           </RequireAuth>
         }
-      />
-      <Route
-        path="/admin/requests"
-        element={
-          <RequireAuth>
-            <RequireAdmin>
-              <AdminRequestsPage />
-            </RequireAdmin>
-          </RequireAuth>
-        }
-      />
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route
+          path="/users/new"
+          element={
+            <RequireManager>
+              <CreateUserPage />
+            </RequireManager>
+          }
+        />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

@@ -25,6 +25,7 @@ model User {
   active              Boolean   @default(true)
   passwordHash        String
   role                Role      @default(employee)
+  isMaster            Boolean   @default(false)
   mustChangePassword  Boolean   @default(false)
   resetTokenHash      String?   @unique
   resetTokenExpiresAt DateTime?
@@ -129,4 +130,12 @@ model DailySummary {
   referenceDate DateTime @db.Date
   generatedText String
   createdAt     DateTime @default(now())
+}
+
+model Condominium {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }

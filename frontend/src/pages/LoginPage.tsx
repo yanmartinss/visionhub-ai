@@ -23,8 +23,6 @@ function LoginPage() {
       const user = await login(email, password, maintainSession);
       if (user.mustChangePassword) {
         navigate("/choose-password", { replace: true });
-      } else if (user.role === "admin") {
-        navigate("/admin/requests", { replace: true });
       } else {
         navigate("/dashboard", { replace: true });
       }

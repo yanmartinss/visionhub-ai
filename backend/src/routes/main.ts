@@ -5,6 +5,7 @@ import * as userController from "../controllers/user.controller.ts";
 import { requireAuth } from "../middleware/require-auth.ts";
 import { requireAdmin } from "../middleware/require-admin.ts";
 import { authLimiter, requestLimiter } from "../middleware/rate-limit.ts";
+import { requireManager } from "../middleware/require-manager.ts";
 
 export const routes = Router();
 
@@ -24,6 +25,12 @@ routes.post("/auth/reset-password", authLimiter, authController.resetPassword);
 
 routes.get("/me", requireAuth, authController.me);
 routes.patch("/users/me/password", requireAuth, userController.changePassword);
+routes.post(
+  "/users/register",
+  requireAuth,
+  requireManager,
+  userController.registerUser,
+);
 
 routes.get(
   "/requests",
