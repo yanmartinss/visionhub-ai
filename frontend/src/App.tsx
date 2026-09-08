@@ -5,7 +5,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ChoosePasswordPage from "./pages/ChoosePasswordPage";
 import DashboardPage from "./pages/DashboardPage";
-import CreateUserPage from "./pages/CreateUserPage";
+import UsersPage from "./pages/UsersPage";
 import SettingsPage from "./pages/SettingsPage";
 import RequireAuth from "./components/RequireAuth";
 import RequireManager from "./components/RequireManager";
@@ -40,10 +40,10 @@ function App() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route
-          path="/users/new"
+          path="/users"
           element={
             <RequireManager>
-              <CreateUserPage />
+              <UsersPage />
             </RequireManager>
           }
         />

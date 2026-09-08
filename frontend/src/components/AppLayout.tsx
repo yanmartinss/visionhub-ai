@@ -25,10 +25,7 @@ function useNavEntries(): NavEntry[] {
   const entries: NavEntry[] = [{ to: "/dashboard", label: "Início" }];
 
   if (user?.role === "manager" || user?.role === "admin") {
-    entries.push({
-      label: "Cadastros",
-      children: [{ to: "/users/new", label: "Cadastrar Usuário" }],
-    });
+    entries.push({ to: "/users", label: "Usuários" });
   }
 
   return entries;
@@ -36,6 +33,7 @@ function useNavEntries(): NavEntry[] {
 
 function AppLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -191,7 +189,7 @@ function AppLayout({ children }: { children: ReactNode }) {
           </div>
 
           <button
-            onClick={handleLogout}
+            onClick={() => setConfirmingLogout(true)}
             className="-mx-2 mt-2 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           >
             <LogOut className="h-4 w-4" />
@@ -199,6 +197,42 @@ function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
+
+      {confirmingLogout && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+          onClick={() => setConfirmingLogout(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 className="font-serif text-lg font-bold text-slate-900">
+              Sair do sistema
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Você precisará entrar novamente para acessar sua conta.
+            </p>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmingLogout(false)}
+                className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex-1 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 cursor-pointer"
+              >
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 px-4 py-6 md:px-8 md:py-10">{children}</main>
     </div>

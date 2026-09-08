@@ -36,3 +36,12 @@ export const registerUser: RequestHandler = async (req, res, next) => {
     next(err);
   }
 };
+
+export const listUsers: RequestHandler = async (_req, res, next) => {
+  try {
+    const users = await userService.listUsers();
+    return res.status(200).json(users);
+  } catch (err) {
+    next(err);
+  }
+};

@@ -31,6 +31,7 @@ routes.post(
   requireManager,
   userController.registerUser,
 );
+routes.get("/users", requireAuth, requireManager, userController.listUsers);
 
 routes.get(
   "/requests",
