@@ -63,6 +63,7 @@ export const listUsers = async () => {
       active: true,
       isMaster: true,
     },
+    orderBy: [{ name: "asc" }, { id: "asc" }],
   });
 
   return users;
@@ -75,6 +76,80 @@ export const updateProfile = async (userId: string, name: string) => {
     select: {
       id: true,
       name: true,
+    },
+  });
+
+  return updatedUser;
+};
+
+export const getUserById = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      active: true,
+      isMaster: true,
+    },
+  });
+
+  return user;
+};
+
+export const reactivateUser = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  if (user.active) {
+    throw new AppError(400, "User is already active");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { active: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      active: true,
+      isMaster: true,
+    },
+  });
+
+  return updatedUser;
+};
+
+export const deactivateUser = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  if (!user.active) {
+    throw new AppError(400, "User is already inactive");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { active: false },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      active: true,
+      isMaster: true,
     },
   });
 

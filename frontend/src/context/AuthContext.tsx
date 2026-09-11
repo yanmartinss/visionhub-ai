@@ -14,6 +14,7 @@ export type User = {
   name: string;
   email: string;
   role: "manager" | "employee" | "admin";
+  isMaster: boolean;
   mustChangePassword: boolean;
 };
 

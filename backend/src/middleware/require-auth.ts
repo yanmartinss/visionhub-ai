@@ -20,6 +20,7 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isMaster: user.isMaster,
       mustChangePassword: user.mustChangePassword,
     };
 

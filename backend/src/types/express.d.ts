@@ -8,6 +8,7 @@ declare global {
         name: string;
         email: string;
         role: Role;
+        isMaster: boolean;
         mustChangePassword: boolean;
       };
     }

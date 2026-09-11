@@ -36,6 +36,18 @@ routes.post(
 );
 routes.get("/users", requireAuth, requireManager, userController.listUsers);
 routes.patch("/users/me", requireAuth, userController.updateProfile);
+routes.patch(
+  "/users/:id/reactivate",
+  requireAuth,
+  requireManager,
+  userController.reactivateUser,
+);
+routes.patch(
+  "/users/:id/deactivate",
+  requireAuth,
+  requireManager,
+  userController.deactivateUser,
+);
 
 // REQUEST ROUTES
 routes.post("/requests", requestLimiter, requestController.requestRegistration);
