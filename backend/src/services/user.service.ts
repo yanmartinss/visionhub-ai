@@ -67,3 +67,16 @@ export const listUsers = async () => {
 
   return users;
 };
+
+export const updateProfile = async (userId: string, name: string) => {
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { name },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+
+  return updatedUser;
+};

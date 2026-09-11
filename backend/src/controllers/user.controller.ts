@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { passwordSchema } from "../schemas/password-schema.ts";
 import * as userService from "../services/user.service.ts";
 import { createUserSchema } from "../schemas/create-user-schema.ts";
+import { updateProfileSchema } from "../schemas/update-profile-schema.ts";
 
 export const changePassword: RequestHandler = async (req, res, next) => {
   const result = passwordSchema.safeParse(req.body);
@@ -41,6 +42,22 @@ export const listUsers: RequestHandler = async (_req, res, next) => {
   try {
     const users = await userService.listUsers();
     return res.status(200).json(users);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateProfile: RequestHandler = async (req, res, next) => {
+  const result = updateProfileSchema.safeParse(req.body);
+  if (!result.success)
+    return res.status(400).json({ error: "Invalid profile data" });
+
+  try {
+    const user = await userService.updateProfile(
+      req.user!.id,
+      result.data.name,
+    );
+    return res.status(200).json(user);
   } catch (err) {
     next(err);
   }

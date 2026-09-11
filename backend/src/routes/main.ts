@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as requestController from "../controllers/request.controller.ts";
 import * as authController from "../controllers/auth.controller.ts";
 import * as userController from "../controllers/user.controller.ts";
+import * as condominiumController from "../controllers/condominium.controller.ts";
 import { requireAuth } from "../middleware/require-auth.ts";
 import { requireAdmin } from "../middleware/require-admin.ts";
 import { authLimiter, requestLimiter } from "../middleware/rate-limit.ts";
@@ -9,11 +10,12 @@ import { requireManager } from "../middleware/require-manager.ts";
 
 export const routes = Router();
 
+// HEALTH ROUTE
 routes.get("/ping", (_req, res) => {
   res.json({ pong: true });
 });
 
-routes.post("/requests", requestLimiter, requestController.requestRegistration);
+// AUTH ROUTES
 routes.post("/login", authLimiter, authController.login);
 routes.post("/logout", authController.logout);
 routes.post(
@@ -23,6 +25,7 @@ routes.post(
 );
 routes.post("/auth/reset-password", authLimiter, authController.resetPassword);
 
+// USER ROUTES
 routes.get("/me", requireAuth, authController.me);
 routes.patch("/users/me/password", requireAuth, userController.changePassword);
 routes.post(
@@ -32,7 +35,10 @@ routes.post(
   userController.registerUser,
 );
 routes.get("/users", requireAuth, requireManager, userController.listUsers);
+routes.patch("/users/me", requireAuth, userController.updateProfile);
 
+// REQUEST ROUTES
+routes.post("/requests", requestLimiter, requestController.requestRegistration);
 routes.get(
   "/requests",
   requireAuth,
@@ -50,4 +56,18 @@ routes.patch(
   requireAuth,
   requireAdmin,
   requestController.rejectRequest,
+);
+
+// CONDOMINIUM ROUTES
+routes.get(
+  "/condominium",
+  requireAuth,
+  requireManager,
+  condominiumController.getCondominium,
+);
+routes.patch(
+  "/condominium",
+  requireAuth,
+  requireManager,
+  condominiumController.updateCondominium,
 );

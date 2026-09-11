@@ -133,9 +133,14 @@ model DailySummary {
 }
 
 model Condominium {
-  id        String   @id @default(uuid())
-  name      String
-  address   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  cep          String?
+  street       String?
+  neighborhood String?
+  number       String?
+  city         String?
+  state        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }

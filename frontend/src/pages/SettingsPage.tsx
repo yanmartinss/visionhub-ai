@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import AccessRequestsPanel from "../components/AccessRequestsPanel";
+import GeneralSettingsPanel from "../components/GeneralSettingsPanel";
 
 type Tab = "geral" | "solicitacoes";
 
@@ -40,9 +41,7 @@ function SettingsPage() {
         )}
       </div>
 
-      {tab === "geral" && (
-        <p className="text-sm text-slate-500">Em construção.</p>
-      )}
+      {tab === "geral" && <GeneralSettingsPanel />}
       {tab === "solicitacoes" && isAdmin && <AccessRequestsPanel />}
     </div>
   );
