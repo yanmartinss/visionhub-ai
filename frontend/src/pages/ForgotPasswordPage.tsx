@@ -18,12 +18,19 @@ function ForgotPasswordPage() {
       await apiFetch("/auth/forgot-password", {
         method: "POST",
         body: { email },
+        timeoutMs: 8_000,
       });
       setSubmitted(true);
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Não foi possível enviar.",
-      );
+      if (err instanceof ApiError && err.status === 408) {
+        setError(
+          "Não foi possível enviar: o servidor de e-mail não respondeu a tempo. Tente novamente em instantes.",
+        );
+      } else {
+        setError(
+          err instanceof ApiError ? err.message : "Não foi possível enviar.",
+        );
+      }
     } finally {
       setSubmitting(false);
     }
