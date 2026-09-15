@@ -3,6 +3,7 @@ import * as requestController from "../controllers/request.controller.ts";
 import * as authController from "../controllers/auth.controller.ts";
 import * as userController from "../controllers/user.controller.ts";
 import * as condominiumController from "../controllers/condominium.controller.ts";
+import * as cameraController from "../controllers/camera.controller.ts";
 import { requireAuth } from "../middleware/require-auth.ts";
 import { requireAdmin } from "../middleware/require-admin.ts";
 import { authLimiter, requestLimiter } from "../middleware/rate-limit.ts";
@@ -82,4 +83,36 @@ routes.patch(
   requireAuth,
   requireManager,
   condominiumController.updateCondominium,
+);
+
+// CAMERA ROUTES
+routes.post(
+  "/cameras",
+  requireAuth,
+  requireManager,
+  cameraController.addCamera,
+);
+routes.get(
+  "/cameras",
+  requireAuth,
+  requireManager,
+  cameraController.listCameras,
+);
+routes.patch(
+  "/cameras/:id/reactivate",
+  requireAuth,
+  requireManager,
+  cameraController.reactivateCamera,
+);
+routes.patch(
+  "/cameras/:id/deactivate",
+  requireAuth,
+  requireManager,
+  cameraController.deactivateCamera,
+);
+routes.patch(
+  "/cameras/:id",
+  requireAuth,
+  requireManager,
+  cameraController.updateCamera,
 );

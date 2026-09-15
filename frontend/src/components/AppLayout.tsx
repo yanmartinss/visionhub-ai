@@ -26,6 +26,7 @@ function useNavEntries(): NavEntry[] {
 
   if (user?.role === "manager" || user?.role === "admin") {
     entries.push({ to: "/users", label: "Usuários" });
+    entries.push({ to: "/cameras", label: "Câmeras" });
   }
 
   return entries;

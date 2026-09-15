@@ -99,17 +99,10 @@ export const getUserById = async (userId: string) => {
 };
 
 export const reactivateUser = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
+  const findUser = await getUserById(userId);
+  if (!findUser) throw new AppError(404, "User not found");
 
-  if (!user) {
-    throw new AppError(404, "User not found");
-  }
-
-  if (user.active) {
-    throw new AppError(400, "User is already active");
-  }
+  if (findUser.active) throw new AppError(400, "User is already active");
 
   const updatedUser = await prisma.user.update({
     where: { id: userId },
@@ -128,17 +121,11 @@ export const reactivateUser = async (userId: string) => {
 };
 
 export const deactivateUser = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
+  const findUser = await getUserById(userId);
 
-  if (!user) {
-    throw new AppError(404, "User not found");
-  }
+  if (!findUser) throw new AppError(404, "User not found");
 
-  if (!user.active) {
-    throw new AppError(400, "User is already inactive");
-  }
+  if (!findUser.active) throw new AppError(400, "User is already inactive");
 
   const updatedUser = await prisma.user.update({
     where: { id: userId },

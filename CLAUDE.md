@@ -70,6 +70,9 @@ Comandos (rodar dentro de `backend/`):
 - Há skills do Prisma instaladas em `backend/.claude/skills/` (escopo: arquivos sob
   `backend/`) — usá-las para dúvidas de CLI/queries do Prisma.
 
+### Padrão de Arquitetura do Backend
+- As implementações do backend devem sempre seguir, por preferência e convenção do projeto, o fluxo estrutural: **Rota → Controller → Service**.
+
 ## Convenções
 
 - Commits no estilo Conventional Commits (`feat:`, `fix:`, ...).

@@ -6,6 +6,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ChoosePasswordPage from "./pages/ChoosePasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
+import CamerasPage from "./pages/CamerasPage";
 import SettingsPage from "./pages/SettingsPage";
 import RequireAuth from "./components/RequireAuth";
 import RequireManager from "./components/RequireManager";
@@ -44,6 +45,14 @@ function App() {
           element={
             <RequireManager>
               <UsersPage />
+            </RequireManager>
+          }
+        />
+        <Route
+          path="/cameras"
+          element={
+            <RequireManager>
+              <CamerasPage />
             </RequireManager>
           }
         />
