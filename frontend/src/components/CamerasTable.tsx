@@ -104,7 +104,10 @@ function CamerasTable() {
           </thead>
           <tbody>
             {cameras.map((c) => (
-              <tr key={c.id} className="border-b border-slate-100 last:border-0">
+              <tr
+                key={c.id}
+                className="border-b border-slate-100 last:border-0"
+              >
                 <td className="px-4 py-3">{c.name}</td>
                 <td className="px-4 py-3">{c.location}</td>
                 <td className="px-4 py-3">
@@ -123,7 +126,7 @@ function CamerasTable() {
                     <button
                       disabled={busyId === c.id}
                       onClick={() => openEdit(c)}
-                      className="w-20 shrink-0 rounded-md border border-slate-300 px-3 py-1.5 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                      className="cursor-pointer w-20 shrink-0 rounded-md border border-slate-300 px-3 py-1.5 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                     >
                       Editar
                     </button>
@@ -131,7 +134,7 @@ function CamerasTable() {
                       <button
                         disabled={busyId === c.id}
                         onClick={() => act(c.id, "deactivate")}
-                        className="w-24 shrink-0 rounded-md border border-red-300 px-3 py-1.5 text-center text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                        className="cursor-pointer w-24 shrink-0 rounded-md border border-red-300 px-3 py-1.5 text-center text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
                       >
                         Desativar
                       </button>

@@ -4,6 +4,7 @@ import * as authController from "../controllers/auth.controller.ts";
 import * as userController from "../controllers/user.controller.ts";
 import * as condominiumController from "../controllers/condominium.controller.ts";
 import * as cameraController from "../controllers/camera.controller.ts";
+import * as ruleController from "../controllers/rule.controller.ts";
 import { requireAuth } from "../middleware/require-auth.ts";
 import { requireAdmin } from "../middleware/require-admin.ts";
 import { authLimiter, requestLimiter } from "../middleware/rate-limit.ts";
@@ -116,3 +117,6 @@ routes.patch(
   requireManager,
   cameraController.updateCamera,
 );
+
+// RULES ROUTES
+routes.post("/rules", requireAuth, requireManager, ruleController.addRule);
