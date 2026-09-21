@@ -5,6 +5,8 @@ import * as userController from "../controllers/user.controller.ts";
 import * as condominiumController from "../controllers/condominium.controller.ts";
 import * as cameraController from "../controllers/camera.controller.ts";
 import * as ruleController from "../controllers/rule.controller.ts";
+import * as recordingDayController from "../controllers/recording-day.controller.ts";
+import * as segmentController from "../controllers/segment.controller.ts";
 import { requireAuth } from "../middleware/require-auth.ts";
 import { requireAdmin } from "../middleware/require-admin.ts";
 import { authLimiter, requestLimiter } from "../middleware/rate-limit.ts";
@@ -120,3 +122,46 @@ routes.patch(
 
 // RULES ROUTES
 routes.post("/rules", requireAuth, requireManager, ruleController.addRule);
+
+// RECORDING DAY (BATCH) ROUTES
+routes.post(
+  "/recording-days",
+  requireAuth,
+  requireManager,
+  recordingDayController.createRecordingDay,
+);
+routes.get(
+  "/recording-days",
+  requireAuth,
+  recordingDayController.listRecordingDays,
+);
+routes.get(
+  "/recording-days/:id",
+  requireAuth,
+  recordingDayController.getRecordingDay,
+);
+routes.get(
+  "/recording-days/:id/events",
+  requireAuth,
+  recordingDayController.listDayEvents,
+);
+routes.post(
+  "/recording-days/:id/segments/link",
+  requireAuth,
+  requireManager,
+  segmentController.attachLinkSegment,
+);
+routes.post(
+  "/recording-days/:id/segments/upload",
+  requireAuth,
+  requireManager,
+  segmentController.uploadSegment,
+);
+
+// SEGMENT ROUTES
+routes.post(
+  "/segments/:id/reprocess",
+  requireAuth,
+  requireManager,
+  segmentController.reprocessSegment,
+);

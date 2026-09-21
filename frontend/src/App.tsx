@@ -7,6 +7,8 @@ import ChoosePasswordPage from "./pages/ChoosePasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 import CamerasPage from "./pages/CamerasPage";
+import RecordingsPage from "./pages/RecordingsPage";
+import RecordingDetailPage from "./pages/RecordingDetailPage";
 import SettingsPage from "./pages/SettingsPage";
 import RequireAuth from "./components/RequireAuth";
 import RequireManager from "./components/RequireManager";
@@ -40,6 +42,8 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/recordings" element={<RecordingsPage />} />
+        <Route path="/recordings/:id" element={<RecordingDetailPage />} />
         <Route
           path="/users"
           element={

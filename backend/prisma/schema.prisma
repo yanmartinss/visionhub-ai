@@ -31,6 +31,8 @@ model User {
   resetTokenExpiresAt DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @default(now()) @updatedAt
+
+  recordingDays RecordingDay[]
 }
 
 enum StatusRequest {
@@ -58,9 +60,10 @@ model Camera {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  areas  Area[]
-  rules  Rule[]
-  events Event[]
+  areas         Area[]
+  rules         Rule[]
+  events        Event[]
+  recordingDays RecordingDay[]
 }
 
 enum AreaType {
@@ -106,12 +109,19 @@ model Event {
   technicalDescription String?
   startedAt            DateTime
   endedAt              DateTime?
+  segmentId            String?
+  occurredAt           DateTime?
+  confidence           Float?
+  thumbnailPath        String?
+  clipPath             String?
   createdAt            DateTime  @default(now())
 
-  camera Camera  @relation(fields: [cameraId], references: [id])
-  alerts Alert[]
+  camera  Camera   @relation(fields: [cameraId], references: [id])
+  segment Segment? @relation(fields: [segmentId], references: [id])
+  alerts  Alert[]
 
   @@index([cameraId, startedAt])
+  @@index([segmentId])
 }
 
 model Alert {
@@ -126,10 +136,72 @@ model Alert {
 }
 
 model DailySummary {
-  id            String   @id @default(uuid())
-  referenceDate DateTime @db.Date
-  generatedText String
-  createdAt     DateTime @default(now())
+  id             String   @id @default(uuid())
+  referenceDate  DateTime @db.Date
+  generatedText  String
+  recordingDayId String?  @unique
+  createdAt      DateTime @default(now())
+
+  recordingDay RecordingDay? @relation(fields: [recordingDayId], references: [id])
+}
+
+enum RecordingDayStatus {
+  pending
+  processing
+  completed
+  partial
+  failed
+}
+
+enum SegmentStatus {
+  received
+  processing
+  completed
+  failed
+}
+
+enum SegmentSourceType {
+  upload
+  link
+}
+
+model RecordingDay {
+  id        String             @id @default(uuid())
+  cameraId  String
+  date      DateTime           @db.Date
+  status    RecordingDayStatus @default(pending)
+  createdBy String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @default(now()) @updatedAt
+
+  camera       Camera        @relation(fields: [cameraId], references: [id])
+  creator      User          @relation(fields: [createdBy], references: [id])
+  segments     Segment[]
+  dailySummary DailySummary?
+
+  @@unique([cameraId, date])
+}
+
+model Segment {
+  id             String            @id @default(uuid())
+  recordingDayId String
+  sourceType     SegmentSourceType
+  sourceRef      String
+  storagePath    String?
+  fileHash       String?
+  startedAt      DateTime
+  durationSec    Int?
+  status         SegmentStatus     @default(received)
+  attempts       Int               @default(0)
+  error          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @default(now()) @updatedAt
+
+  recordingDay RecordingDay @relation(fields: [recordingDayId], references: [id])
+  events       Event[]
+
+  @@unique([recordingDayId, fileHash])
+  @@index([recordingDayId, startedAt])
 }
 
 model Condominium {

@@ -22,7 +22,10 @@ function isModule(entry: NavEntry): entry is NavModule {
 
 function useNavEntries(): NavEntry[] {
   const { user } = useAuth();
-  const entries: NavEntry[] = [{ to: "/dashboard", label: "Início" }];
+  const entries: NavEntry[] = [
+    { to: "/dashboard", label: "Início" },
+    { to: "/recordings", label: "Gravações" },
+  ];
 
   if (user?.role === "manager" || user?.role === "admin") {
     entries.push({ to: "/users", label: "Usuários" });
@@ -113,7 +116,10 @@ function AppLayout({ children }: { children: ReactNode }) {
         <nav className="flex-1 space-y-1 px-3">
           {entries.map((entry) => {
             if (!isModule(entry)) {
-              const active = location.pathname === entry.to;
+              // Detail pages (e.g. /recordings/:id) keep their section highlighted.
+              const active =
+                location.pathname === entry.to ||
+                location.pathname.startsWith(`${entry.to}/`);
               return (
                 <Link
                   key={entry.to}

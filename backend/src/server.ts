@@ -29,6 +29,9 @@ server.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   return res.status(500).json({ error: "Internal Server Error" });
 });
 
-server.listen(process.env.PORT || 8080, () => {
+const httpServer = server.listen(process.env.PORT || 8080, () => {
   console.log(`Server running on http://localhost:${process.env.PORT || 8080}`);
 });
+
+// Node's default (5 min) would cut off large recording uploads.
+httpServer.requestTimeout = 60 * 60 * 1000;

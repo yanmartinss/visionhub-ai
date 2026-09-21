@@ -8,3 +8,7 @@ build/
 __pycache__/
 *.pyc
 .claude
+
+# Vídeos, clipes e uploads temporários
+storage/
+tmp/
