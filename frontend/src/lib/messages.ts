@@ -16,13 +16,31 @@ const API_MESSAGES: Record<string, string> = {
   "Invalid segment data": "Dados inválidos. Confira o horário de início.",
   "Recording day not found": "Lote não encontrado.",
   "Segment not found": "Segmento não encontrado.",
-  "Only failed segments can be reprocessed":
-    "Só segmentos com falha podem ser reprocessados.",
+  "Only failed or completed segments can be reprocessed":
+    "Só segmentos com falha ou já concluídos podem ser reprocessados.",
   "Camera not found": "Câmera não encontrada.",
   "Camera is inactive": "Esta câmera está inativa.",
   "Invalid recording day data": "Escolha uma câmera e uma data válidas.",
   "Too many requests, please try again later":
     "Muitas requisições em pouco tempo. Aguarde alguns minutos e tente de novo.",
+  "Only JPEG, PNG or WebP images are accepted":
+    "Envie uma imagem JPEG, PNG ou WebP.",
+  "Image exceeds the maximum allowed size":
+    "A imagem excede o tamanho máximo permitido.",
+  "Image is required": "Selecione uma imagem.",
+  "No reference image for this camera":
+    "Esta câmera ainda não tem imagem de referência.",
+  "Invalid area data": "Dados da área inválidos. Marque pelo menos 3 pontos.",
+  "Area not found": "Área não encontrada.",
+  "Time limit is required for this event type":
+    "Informe o tempo limite para este tipo de evento.",
+  "This event type must not have a time limit":
+    "Este tipo de evento não usa tempo limite.",
+  "Invalid camera id or event type": "Tipo de evento inválido.",
+  "Nothing to update": "Nada para atualizar.",
+  "Invalid event id": "Evento inválido.",
+  "Invalid event status": "Status de evento inválido.",
+  "Event not found": "Evento não encontrado.",
 };
 
 export function describeError(err: unknown, fallback: string): string {
@@ -37,25 +55,49 @@ const SEGMENT_ERRORS: [RegExp, (match: RegExpMatchArray) => string][] = [
     () =>
       "O link não aponta para o arquivo (é uma página web). Use um link de download direto.",
   ],
-  [/^Download failed \(HTTP (\d+)\)$/, (m) => `O servidor do link respondeu erro ${m[1]}.`],
+  [
+    /^Download failed \(HTTP (\d+)\)$/,
+    (m) => `O servidor do link respondeu erro ${m[1]}.`,
+  ],
   [/^Could not connect to the link$/, () => "Não foi possível acessar o link."],
-  [/^(Download|Connection) timed out$/, () => "O link demorou demais para responder."],
+  [
+    /^(Download|Connection) timed out$/,
+    () => "O link demorou demais para responder.",
+  ],
   [/^Download interrupted$/, () => "O download foi interrompido."],
   [/^Downloaded file is empty$/, () => "O arquivo baixado está vazio."],
   [/^Too many redirects$/, () => "O link redireciona demais."],
-  [/^(Redirect without a location|Invalid redirect location)$/, () => "O link tem um redirecionamento inválido."],
-  [/^Link resolves to a private address$/, () => "O link aponta para um endereço não permitido."],
+  [
+    /^(Redirect without a location|Invalid redirect location)$/,
+    () => "O link tem um redirecionamento inválido.",
+  ],
+  [
+    /^Link resolves to a private address$/,
+    () => "O link aponta para um endereço não permitido.",
+  ],
   [/^Link domain not allowed$/, () => "O domínio do link não está liberado."],
   [/^Link must use https$/, () => "O link precisa usar https."],
-  [/^File exceeds the maximum allowed size$/, () => "O arquivo excede o tamanho máximo permitido."],
-  [/^Stored file is missing or empty$/, () => "O arquivo armazenado não foi encontrado."],
-  [/^Segment has no stored file$/, () => "O segmento não tem arquivo armazenado."],
+  [
+    /^File exceeds the maximum allowed size$/,
+    () => "O arquivo excede o tamanho máximo permitido.",
+  ],
+  [
+    /^Stored file is missing or empty$/,
+    () => "O arquivo armazenado não foi encontrado.",
+  ],
+  [
+    /^Segment has no stored file$/,
+    () => "O segmento não tem arquivo armazenado.",
+  ],
   [/^Processing failed$/, () => "Falha no processamento."],
   [
     /^Duplicate of segment [\w-]+, skipped$/,
     () => "Conteúdo duplicado: já existe outro segmento igual neste lote.",
   ],
-  [/^Duplicate of another segment, skipped$/, () => "Conteúdo duplicado: já existe outro segmento igual neste lote."],
+  [
+    /^Duplicate of another segment, skipped$/,
+    () => "Conteúdo duplicado: já existe outro segmento igual neste lote.",
+  ],
 ];
 
 export function describeSegmentError(message: string): string {

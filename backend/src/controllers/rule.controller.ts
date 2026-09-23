@@ -1,19 +1,39 @@
 import type { RequestHandler } from "express";
-import { createRuleSchema } from "../schemas/create-rule-schema.ts";
+import { eventTypeParamSchema } from "../schemas/event-type-param-schema.ts";
+import { createUpsertRuleSchema } from "../schemas/upsert-rule-schema.ts";
 import * as ruleService from "../services/rule.service.ts";
 
-export const addRule: RequestHandler = async (req, res, next) => {
-  const result = createRuleSchema.safeParse(req.body);
-  if (!result.success)
-    return res.status(400).json({ error: "Invalid rule data" });
+export const listRules: RequestHandler = async (req, res, next) => {
+  const cameraId = req.params.id as string;
   try {
-    const created = await ruleService.addRule(result.data);
-    return res.status(201).json({
-      id: created.id,
-      cameraId: created.cameraId,
-      eventType: created.eventType,
-      timeLimitSeconds: created.timeLimitSeconds,
-    });
+    const rules = await ruleService.listRulesByCamera(cameraId);
+    return res.status(200).json(rules);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const upsertRule: RequestHandler = async (req, res, next) => {
+  const params = eventTypeParamSchema.safeParse(req.params);
+  if (!params.success)
+    return res.status(400).json({ error: "Invalid camera id or event type" });
+
+  const result = createUpsertRuleSchema(params.data.eventType).safeParse(
+    req.body,
+  );
+  if (!result.success) {
+    return res
+      .status(400)
+      .json({ error: result.error.issues[0]?.message ?? "Invalid rule data" });
+  }
+
+  try {
+    const rule = await ruleService.upsertRule(
+      params.data.id,
+      params.data.eventType,
+      result.data,
+    );
+    return res.status(200).json(rule);
   } catch (err) {
     next(err);
   }

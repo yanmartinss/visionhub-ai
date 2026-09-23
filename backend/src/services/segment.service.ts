@@ -102,8 +102,12 @@ export const attachUploadedSegment = async (
 };
 
 export const reprocessSegment = async (segmentId: string) => {
+  // `completed` is accepted too (not just `failed`): re-running detection is
+  // how an operator picks up a newly marked area, an edited fixture (dev/demo
+  // detector), or otherwise wants a fresh pass without re-uploading the file.
+  // `received`/`processing` are excluded — already queued or in flight.
   const updated = await prisma.segment.updateMany({
-    where: { id: segmentId, status: "failed" },
+    where: { id: segmentId, status: { in: ["failed", "completed"] } },
     data: { status: "received", error: null },
   });
 
@@ -113,7 +117,10 @@ export const reprocessSegment = async (segmentId: string) => {
       select: { id: true },
     });
     if (!segment) throw new AppError(404, "Segment not found");
-    throw new AppError(409, "Only failed segments can be reprocessed");
+    throw new AppError(
+      409,
+      "Only failed or completed segments can be reprocessed",
+    );
   }
 
   const segment = await prisma.segment.findUniqueOrThrow({

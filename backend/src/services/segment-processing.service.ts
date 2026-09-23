@@ -90,6 +90,7 @@ export const processSegmentJob = async (job: Job<SegmentJobData>) => {
 
   const segment = await prisma.segment.findUniqueOrThrow({
     where: { id: segmentId },
+    include: { recordingDay: { select: { cameraId: true } } },
   });
   await refreshRecordingDayStatus(segment.recordingDayId);
 
@@ -101,6 +102,7 @@ export const processSegmentJob = async (job: Job<SegmentJobData>) => {
       segmentId: segment.id,
       filePath: path.join(storageDir(), storagePath),
       startedAt: segment.startedAt,
+      cameraId: segment.recordingDay.cameraId,
     });
     await markCompleted(segment);
   } catch (err) {

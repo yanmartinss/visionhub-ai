@@ -45,3 +45,16 @@ export function todayLocalDate(): string {
 export function dayToInputDate(iso: string): string {
   return iso.slice(0, 10);
 }
+
+// Coverage gaps/overlaps come back in seconds; show whichever unit reads best.
+export function formatDuration(seconds: number): string {
+  const total = Math.round(Math.abs(seconds));
+  if (total < 60) return `${total} s`;
+  const minutes = Math.round(total / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes > 0
+    ? `${hours} h ${remainingMinutes} min`
+    : `${hours} h`;
+}

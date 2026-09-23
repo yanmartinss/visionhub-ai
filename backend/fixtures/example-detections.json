@@ -1,0 +1,20 @@
+[
+  {
+    "label": "gate_open",
+    "box": { "x": 0.42, "y": 0.1, "width": 0.16, "height": 0.35 },
+    "confidence": 0.91,
+    "timeSec": 1.0
+  },
+  {
+    "label": "gate_open",
+    "box": { "x": 0.42, "y": 0.1, "width": 0.16, "height": 0.35 },
+    "confidence": 0.88,
+    "timeSec": 2.5
+  },
+  {
+    "label": "person",
+    "box": { "x": 0.2, "y": 0.5, "width": 0.08, "height": 0.2 },
+    "confidence": 0.76,
+    "timeSec": 4.0
+  }
+]

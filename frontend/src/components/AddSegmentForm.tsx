@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Link as LinkIcon, Upload } from "lucide-react";
 import { ApiError, apiRequest, apiUpload } from "../lib/api";
 import { dayToInputDate, formatBytes, toApiDateTime } from "../lib/format";
+import { inferStartedAt } from "../lib/infer-started-at";
 import { describeError } from "../lib/messages";
 import type { Segment } from "../lib/types";
 
@@ -25,6 +26,7 @@ function AddSegmentForm({ recordingDayId, dayDate, onAdded }: Props) {
   );
   const [file, setFile] = useState<File | null>(null);
   const [fileKey, setFileKey] = useState(0);
+  const [startedAtHint, setStartedAtHint] = useState<string | null>(null);
   const [url, setUrl] = useState("");
   const [progress, setProgress] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -71,6 +73,7 @@ function AddSegmentForm({ recordingDayId, dayDate, onAdded }: Props) {
       );
       setFile(null);
       setFileKey((key) => key + 1);
+      setStartedAtHint(null);
       onAdded();
     } catch (err) {
       if (controller.signal.aborted) {
@@ -119,6 +122,24 @@ function AddSegmentForm({ recordingDayId, dayDate, onAdded }: Props) {
     } finally {
       setBusy(false);
     }
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const selected = event.target.files?.[0] ?? null;
+    setFile(selected);
+    setStartedAtHint(null);
+    if (!selected) return;
+
+    const inferred = inferStartedAt(selected.name);
+    if (!inferred) return;
+
+    const sameDay = inferred.date === dayToInputDate(dayDate);
+    setStartedAt(`${inferred.date}T${inferred.time}`);
+    setStartedAtHint(
+      sameDay
+        ? "Sugerido a partir do nome do arquivo — confira."
+        : `Sugerido a partir do nome do arquivo (${inferred.date}), que é um dia diferente do lote — confira.`,
+    );
   }
 
   function switchMode(next: Mode) {
@@ -175,10 +196,16 @@ function AddSegmentForm({ recordingDayId, dayDate, onAdded }: Props) {
             id="segment-started-at"
             type="datetime-local"
             value={startedAt}
-            onChange={(event) => setStartedAt(event.target.value)}
+            onChange={(event) => {
+              setStartedAt(event.target.value);
+              setStartedAtHint(null);
+            }}
             disabled={busy}
             className={FIELD_INPUT}
           />
+          {startedAtHint && (
+            <p className="mt-1.5 text-xs text-amber-700">{startedAtHint}</p>
+          )}
         </div>
 
         {mode === "upload" ? (
@@ -192,7 +219,7 @@ function AddSegmentForm({ recordingDayId, dayDate, onAdded }: Props) {
               type="file"
               accept="video/*,.dav,.mkv,.avi,.mov,.ts,.h264,.264"
               disabled={busy}
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              onChange={handleFileChange}
               className="mt-1.5 block w-full text-sm text-slate-700 file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-slate-300 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-50"
             />
             {file && (

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiFetch, ApiError } from "../lib/api";
 
 type CameraRow = {
@@ -123,6 +124,12 @@ function CamerasTable() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
+                    <Link
+                      to={`/cameras/${c.id}/rules`}
+                      className="w-28 shrink-0 rounded-md border border-slate-300 px-3 py-1.5 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Regras e áreas
+                    </Link>
                     <button
                       disabled={busyId === c.id}
                       onClick={() => openEdit(c)}

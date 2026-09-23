@@ -53,12 +53,13 @@ model Request {
 }
 
 model Camera {
-  id        String   @id @default(uuid())
-  name      String
-  location  String
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id                 String   @id @default(uuid())
+  name               String
+  location           String
+  active             Boolean  @default(true)
+  referenceImagePath String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
 
   areas         Area[]
   rules         Rule[]
@@ -69,6 +70,9 @@ model Camera {
 enum AreaType {
   restricted
   sensitive
+  noParking
+  parkingLot
+  trash
 }
 
 model Area {
@@ -87,7 +91,16 @@ enum EventType {
   occupancy
   restrictedArea
   abandonedObject
+  illegalParking
+  childRunning
+  petWaste
   other
+}
+
+enum EventStatus {
+  pending
+  inProgress
+  resolved
 }
 
 model Rule {
@@ -100,12 +113,15 @@ model Rule {
   updatedAt        DateTime  @default(now()) @updatedAt
 
   camera Camera @relation(fields: [cameraId], references: [id])
+
+  @@unique([cameraId, eventType])
 }
 
 model Event {
-  id                   String    @id @default(uuid())
+  id                   String      @id @default(uuid())
   cameraId             String
   type                 EventType
+  status               EventStatus @default(pending)
   technicalDescription String?
   startedAt            DateTime
   endedAt              DateTime?
@@ -114,12 +130,13 @@ model Event {
   confidence           Float?
   thumbnailPath        String?
   clipPath             String?
-  createdAt            DateTime  @default(now())
+  createdAt            DateTime    @default(now())
 
   camera  Camera   @relation(fields: [cameraId], references: [id])
   segment Segment? @relation(fields: [segmentId], references: [id])
   alerts  Alert[]
 
+  @@unique([cameraId, type, occurredAt])
   @@index([cameraId, startedAt])
   @@index([segmentId])
 }
@@ -132,7 +149,7 @@ model Alert {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @default(now()) @updatedAt
 
-  event Event @relation(fields: [eventId], references: [id])
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model DailySummary {
@@ -183,25 +200,45 @@ model RecordingDay {
 }
 
 model Segment {
-  id             String            @id @default(uuid())
-  recordingDayId String
-  sourceType     SegmentSourceType
-  sourceRef      String
-  storagePath    String?
-  fileHash       String?
-  startedAt      DateTime
-  durationSec    Int?
-  status         SegmentStatus     @default(received)
-  attempts       Int               @default(0)
-  error          String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @default(now()) @updatedAt
+  id                String            @id @default(uuid())
+  recordingDayId    String
+  sourceType        SegmentSourceType
+  sourceRef         String
+  storagePath       String?
+  fileHash          String?
+  startedAt         DateTime
+  durationSec       Int?
+  metadataStartedAt DateTime?
+  warning           String?
+  status            SegmentStatus     @default(received)
+  attempts          Int               @default(0)
+  error             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @default(now()) @updatedAt
 
-  recordingDay RecordingDay @relation(fields: [recordingDayId], references: [id])
+  recordingDay RecordingDay        @relation(fields: [recordingDayId], references: [id])
   events       Event[]
+  intervals    DetectionInterval[]
 
   @@unique([recordingDayId, fileHash])
   @@index([recordingDayId, startedAt])
+}
+
+model DetectionInterval {
+  id            String    @id @default(uuid())
+  segmentId     String
+  eventType     EventType
+  startSec      Float
+  endSec        Float
+  touchesStart  Boolean
+  touchesEnd    Boolean
+  maxConfidence Float
+  createdAt     DateTime  @default(now())
+
+  segment Segment @relation(fields: [segmentId], references: [id])
+
+  @@index([segmentId])
+  @@index([segmentId, eventType])
 }
 
 model Condominium {

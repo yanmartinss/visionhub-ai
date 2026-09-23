@@ -18,6 +18,11 @@ export const ensureStorageDirs = async () => {
   await mkdir(tmpDir(), { recursive: true });
 };
 
+// Lazily created only when a camera reference image is actually uploaded.
+export const ensureDir = async (dir: string) => {
+  await mkdir(dir, { recursive: true });
+};
+
 export const removeFile = async (filePath: string) => {
   await rm(filePath, { force: true }).catch(() => {});
 };

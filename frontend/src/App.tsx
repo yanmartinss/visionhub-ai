@@ -7,6 +7,7 @@ import ChoosePasswordPage from "./pages/ChoosePasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 import CamerasPage from "./pages/CamerasPage";
+import CameraRulesPage from "./pages/CameraRulesPage";
 import RecordingsPage from "./pages/RecordingsPage";
 import RecordingDetailPage from "./pages/RecordingDetailPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -57,6 +58,14 @@ function App() {
           element={
             <RequireManager>
               <CamerasPage />
+            </RequireManager>
+          }
+        />
+        <Route
+          path="/cameras/:id/rules"
+          element={
+            <RequireManager>
+              <CameraRulesPage />
             </RequireManager>
           }
         />

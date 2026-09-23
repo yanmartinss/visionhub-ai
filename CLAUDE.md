@@ -91,10 +91,11 @@ processamento.
 
 ## Componentes ainda não implementados
 
-Detecção e regras (o worker já existe, mas o passo "processar" é um stub), FFmpeg/ffprobe,
-MinIO, Ollama e o serviço Python de visão (**por último**). O `docker-compose.yml` define o
-PostgreSQL e o Redis (API e worker rodam no host; MinIO e Ollama entram nas fatias
-correspondentes). Socket.IO deixou de ser essencial: o front usa **polling** (`hooks/usePolling.ts`).
+FFmpeg (corte/compressão de clipe — hoje só o `ffprobe` para metadados), MinIO, Ollama e o
+serviço Python de visão (**por último**; o detector simulado da Fatia C faz as vezes dele até
+lá). O `docker-compose.yml` define o PostgreSQL e o Redis (API e worker rodam no host; MinIO e
+Ollama entram nas fatias correspondentes). Socket.IO deixou de ser essencial: o front usa
+**polling** (`hooks/usePolling.ts`).
 
 Decisões tomadas (antes em aberto):
 
@@ -135,8 +136,29 @@ papéis; escrita só gestor/admin (a API bloqueia com 403). As mensagens da API 
 traduzidas em `lib/messages.ts`. Datas de lote (`RecordingDay.date`) chegam como meia-noite
 UTC e devem ser formatadas em UTC (`formatDay`). O `ApiError` traz o `status` HTTP.
 
-Ainda não há telas de regras/áreas, eventos (dashboard e histórico reais, ver
-`docs/wireframes/`), clipes nem resumo do dia.
+Tela de regras e áreas por câmera (Fatia B): `/cameras/:id/rules` (só gestor/admin, aberta
+pelo botão "Regras e áreas" na tabela de câmeras). Junta upload/troca da imagem de referência
+(`lib/api.ts` → `apiUploadImage`; bytes buscados como Blob autenticado via `apiFetchBlob` e
+exibidos com `URL.createObjectURL`, nunca `<img src="…">` direto — evita o problema de cookie
+em `<img>` cross-origin), o editor de polígonos (`components/PolygonEditor.tsx`: clique
+adiciona ponto em coordenadas normalizadas [0,1], "Finalizar área" fecha o polígono; editar =
+apagar e redesenhar, sem arrastar vértice) e o painel de regras (`components/RulesPanel.tsx`:
+uma linha por tipo de evento, com campo de minutos quando exigido, toggle ativo e aviso se
+falta área do tipo necessário). Metadados de exigência (`lib/eventTypes.ts`) espelham
+`backend/src/lib/event-types.ts`.
+
+Seção "Eventos" e faixa de avisos de cobertura na tela de gravações (Fatia C):
+`pages/RecordingDetailPage.tsx` busca `GET /recording-days/:id/events` no mesmo ciclo do
+`refresh()` (sem polling dedicado) e lista tipo/horário/confiança/status
+(`components/StatusBadge.tsx` → `EventStatusBadge`), com um `<select>` que chama
+`PATCH /events/:id` — liberado a qualquer papel, diferente do resto da tela. A faixa de avisos
+(`day.coverage.issues`) usa o mesmo estilo âmbar/`AlertTriangle` do `RulesPanel`.
+`components/AddSegmentForm.tsx` tenta `lib/infer-started-at.ts` ao escolher o arquivo e
+pré-preenche "Horário de início" com um aviso (sempre editável).
+
+Ainda não há **dashboard/histórico** reais (wireframes em `docs/wireframes/`; isso é a Fatia D
+— a lista/seção de eventos da Fatia C é só dentro do detalhe de um lote), clipes visíveis nem
+resumo do dia.
 
 Lint: `react-hooks/set-state-in-effect` já acusa 5 erros antigos (`CamerasTable`,
 `UsersTable`, `AccessRequestsPanel`, `GeneralSettingsPanel`); código novo deve buscar dados
@@ -156,9 +178,30 @@ Stack: Node.js + Express 5 (ESM), TypeScript, `tsx watch`. Segurança: `helmet`,
 Estado atual: `src/server.ts` monta o app (helmet, cors, cookies, rate limit, tratamento de
 `AppError`) e faz `listen`; as rotas ficam em `src/routes/main.ts` (prefixo `/api`) e
 seguem Rota → Controller → Service. Existem auth (JWT em cookie), usuários (RBAC:
-`requireAuth`/`requireManager`/`requireAdmin`), solicitações de acesso, condomínio,
-câmeras e criação de regras. `src/lib/prisma.ts` exporta um `PrismaClient` configurado com
-driver adapter.
+`requireAuth`/`requireManager`/`requireAdmin`), solicitações de acesso, condomínio, câmeras
+(CRUD + imagem de referência) e regras/áreas por câmera (Fatia B). `src/lib/prisma.ts`
+exporta um `PrismaClient` configurado com driver adapter.
+
+Endpoints de câmera, regras e áreas (Fatia B; todos `requireAuth` + `requireManager`):
+
+- `GET /api/cameras/:id` — detalhe de uma câmera (`hasReferenceImage`, sem expor o caminho).
+- `POST /api/cameras/:id/reference-image` — multipart (campo `image`; JPEG/PNG/WebP, limite
+  `MAX_REFERENCE_IMAGE_BYTES`), troca a imagem e apaga a anterior (sem sobra em
+  `storage/camera-images/`). `GET /api/cameras/:id/reference-image` serve os bytes (404 se
+  não houver).
+- `GET /api/cameras/:id/rules` — regras já configuradas na câmera.
+- `PUT /api/cameras/:id/rules/:eventType` — upsert `{timeLimitSeconds?, active?}` (uma regra
+  por câmera+tipo, `Rule.@@unique([cameraId, eventType])`); a exigência de `timeLimitSeconds`
+  depende do tipo (ver tabela em `docs/database.md` e `lib/event-types.ts`).
+- `GET /api/cameras/:id/areas`, `POST /api/cameras/:id/areas` `{type, polygon}` (polígono em
+  coordenadas normalizadas [0,1], 3–20 pontos), `PATCH /api/areas/:id`, `DELETE
+/api/areas/:id` (delete físico — `Area` não tem `active`, não é referenciada por outra
+  tabela).
+- **Sem FK entre `Rule` e `Area`**: ligados só pelo `type` em comum, verificado no front (aviso,
+  não bloqueia) e usado pela camada de regras na Fatia C.
+- Tipos de evento novos desta fatia: `illegalParking` (carro em área `noParking`),
+  `childRunning` (criança em área `parkingLot`), `petWaste` (dejeto fora de área `trash`).
+  `abandonedObject` passou a exigir `timeLimitSeconds` (antes não exigia).
 
 Endpoints de lote/segmento (Etapa 2). Cada segmento criado ou reprocessado é enfileirado
 (`tryEnqueueSegment`) e processado pelo worker. Escrita exige `requireManager`; leitura, só `requireAuth`:
@@ -171,7 +214,12 @@ Endpoints de lote/segmento (Etapa 2). Cada segmento criado ou reprocessado é en
 - `POST /api/recording-days/:id/segments/upload` — multipart (`file` + `startedAt`), grava em
   streaming em `STORAGE_DIR/uploads/` e calcula SHA-256; arquivo repetido no lote devolve o
   segmento existente (200 em vez de 202).
-- `POST /api/segments/:id/reprocess` — só segmento `failed` volta a `received` (202).
+- `POST /api/segments/:id/reprocess` — segmento `failed` **ou `completed`** volta a `received`
+  (202); `completed` foi liberado na Fatia C para poder redetectar sem reenviar o arquivo
+  (nova área marcada, fixture do detector simulado trocada). `received`/`processing` seguem
+  bloqueados (já em andamento).
+- `PATCH /api/events/:id` `{status: "pending"|"inProgress"|"resolved"}` — `requireAuth`
+  (qualquer papel; é triagem operacional de alerta, não configuração de câmera).
 
 `startedAt` é ISO 8601 **com offset** (ex.: `2026-09-20T08:00:00-03:00`). A resposta dos
 segmentos não inclui `sourceRef` (para links é a URL, que pode ter token) nem `storagePath`.
@@ -202,6 +250,42 @@ autenticado; detalhes só no log).
 - O `bullmq` exige um cliente `ioredis` construído por nós (ESM): ver `src/queue/connection.ts`.
   O Redis sobe com `docker compose up -d redis` (na raiz do repo).
 
+### Detecção simulada → eventos (Fatia C)
+
+O passo "processar" (`services/segment-processor.ts`) deixou de ser stub: roda em dois passos.
+
+- **Passo A — por segmento** (`services/segment-detection.service.ts`, chamado pelo worker):
+  1. `lib/probe-video.ts` (ffprobe) grava `Segment.durationSec`/`metadataStartedAt`; se o
+     horário do metadado divergir do informado por mais de `START_TIME_MISMATCH_MIN`, grava
+     `Segment.warning` (aviso, não bloqueia; nunca falha o segmento).
+  2. `lib/detector.ts#runDetector` (despachado por `DETECTOR`) devolve `Detection[]` (`label`,
+     caixa normalizada, confiança, `timeSec`). Hoje só existe `simulated`
+     (`services/simulated-detector.service.ts`): lê `storage/uploads/<segmentId>.json`
+     (mesmo nome-base do vídeo); sem arquivo → `[]` (sem detecções, seguro para uploads reais
+     sem fixture). Formato de referência em `backend/fixtures/example-detections.json`. Para
+     testar manualmente: enviar o segmento, anotar o id devolvido pela API, gravar o JSON
+     nesse caminho e **reprocessar o segmento** (`POST /segments/:id/reprocess`, funciona em
+     `completed` desde esta fatia) para rodar a detecção com a fixture.
+  3. Cada detecção é resolvida em 0+ candidatos de tipo de evento (`lib/event-types.ts` →
+     `detectionLabel`/`containment`, casando o rótulo e testando o centro da caixa contra as
+     `Area`s da câmera **no momento do processamento** — `lib/point-in-polygon.ts`), depois
+     agrupada e fundida em `DetectionInterval` por tolerância (`DETECTION_GAP_TOLERANCE_SEC`).
+     Reprocessar um segmento substitui só os intervalos dele (idempotente).
+- **Passo B — finalização do lote** (`services/recording-day-finalization.service.ts`,
+  `finalizeRecordingDay`): funde intervalos de segmentos **contíguos**
+  (`lib/compute-coverage.ts#segmentsAreContiguous`, mesma tolerância `SEGMENT_GAP_TOLERANCE_SEC`
+  usada nos avisos de cobertura) do mesmo tipo, aplica o `timeLimitSeconds` da `Rule` ativa
+  correspondente, e grava `Event` por upsert manual em `(cameraId, type, occurredAt)` — uma
+  atualização nunca toca `status` (preserva o que o usuário já definiu); cria um `Alert` só na
+  criação; remove eventos de uma finalização anterior que não aparecem mais (regra desativada,
+  intervalos mudaram). Roda **inline** (sem fila — é só banco/CPU), chamada por
+  `refreshRecordingDayStatus` quando o lote vira `completed`/`partial`, e por
+  `rule.service.ts#upsertRule` (até 20 lotes mais recentes da câmera) depois de salvar uma
+  regra — mudar regra não exige reprocessar vídeo; mudar área, exige (contenção é do Passo A).
+- **Limitações conhecidas**: `abandonedObject` não rastreia objeto individual (câmera inteira,
+  qualquer detecção `object`) — tracking de verdade é da Fatia G. `EventType.other` nunca é
+  gerado automaticamente (sem `detectionLabel`).
+
 Variáveis de ambiente novas (`backend/.env`, não versionado):
 
 - `STORAGE_DIR` — raiz de `uploads/` e `tmp/` (default `storage`, relativo ao `backend/`).
@@ -209,7 +293,15 @@ Variáveis de ambiente novas (`backend/.env`, não versionado):
   subdomínio); vazio = nenhum link aceito. Ex.: `drive.google.com,onedrive.live.com,1drv.ms`.
 - `MAX_SEGMENT_SIZE_BYTES` — tamanho máximo de um upload ou download (default 5 GiB); acima
   disso, 413 (upload) ou falha do segmento (link).
+- `MAX_REFERENCE_IMAGE_BYTES` — tamanho máximo da imagem de referência da câmera (default 8 MiB); acima disso, 413.
 - `REDIS_URL` — Redis do BullMQ (default `redis://localhost:6379`).
+- `DETECTOR` — `simulated` (default) ou `python` (Fatia G, ainda não implementado).
+- `DETECTION_GAP_TOLERANCE_SEC` — tolerância para fundir detecções cruas num intervalo, dentro
+  de um mesmo segmento (default 3s).
+- `SEGMENT_GAP_TOLERANCE_SEC` — tolerância de contiguidade entre segmentos (default 5s), usada
+  tanto nos avisos de cobertura quanto para decidir se um evento pode atravessar a borda.
+- `START_TIME_MISMATCH_MIN` — divergência (minutos) entre o horário informado e o do metadado
+  do arquivo que dispara `Segment.warning` (default 5).
 - Opcionais, com default no código: `WORKER_CONCURRENCY` (1), `SEGMENT_MAX_ATTEMPTS` (3) e
   `SEGMENT_RETRY_BACKOFF_MS` (30000) — estes dois são lidos por **quem enfileira** (API e
   worker devem usar o mesmo `.env`) —, `RECOVERY_INTERVAL_MS` (5 min), `STALE_PROCESSING_MS`
@@ -232,17 +324,27 @@ start:worker` roda sem watch. Precisa do Redis no ar.
   `.env` via `dotenv/config`).
 - Schema em `backend/prisma/schema.prisma`, sintaxe nova do Prisma (`id uuid()`,
   `enum(...)`). Models: `User`, `Request`, `Condominium`, `Camera`, `Area`, `Rule`, `Event`,
-  `Alert`, `DailySummary`, `RecordingDay`, `Segment` (PK UUID). Migrations em
-  `backend/prisma/migrations/` (aplicar com `npx prisma migrate deploy`). O data model está
+  `Alert`, `DailySummary`, `RecordingDay`, `Segment`, `DetectionInterval` (PK UUID). Migrations
+  em `backend/prisma/migrations/` (aplicar com `npx prisma migrate deploy`). O data model está
   em `docs/database.md`. Os valores dos enums são em minúsculas (`received`, `completed`, ...).
 - **Modelo do novo fluxo** (já aplicado):
   - `RecordingDay`: `cameraId`, `date`, `status` (`pending`/`processing`/`completed`/
     `partial`/`failed`), `createdBy`, timestamps. Única por (`cameraId`, `date`).
   - `Segment`: `recordingDayId`, `sourceType` (`upload`/`link`), `sourceRef` (URL do link ou
-    nome original do arquivo), `storagePath` (arquivo local, relativo a `STORAGE_DIR`), `fileHash` (idempotência; única por lote), `startedAt` (horário real de início),
-    `durationSec`, `status` (`received`/`processing`/`completed`/`failed`), `attempts`, `error`.
-  - `Event`: `segmentId`, `occurredAt` (horário real), `confidence`, `thumbnailPath`,
-    `clipPath` (todos nullable); `startedAt`/`endedAt` continuam sendo os limites do evento.
+    nome original do arquivo), `storagePath` (arquivo local, relativo a `STORAGE_DIR`),
+    `fileHash` (idempotência; única por lote), `startedAt` (horário real de início),
+    `durationSec`, `metadataStartedAt`/`warning` (ffprobe, Fatia C), `status`
+    (`received`/`processing`/`completed`/`failed`), `attempts`, `error`.
+  - `DetectionInterval` (Fatia C): `segmentId`, `eventType`, `startSec`/`endSec`,
+    `touchesStart`/`touchesEnd`, `maxConfidence` — saída do Passo A, consumida só pela
+    finalização (Passo B) do mesmo lote; apagada e recriada a cada (re)processamento do segmento.
+  - `Event`: `status` (`pending`/`inProgress`/`resolved`, Fatia C), `segmentId`, `occurredAt`
+    (horário real), `confidence`, `thumbnailPath`, `clipPath` (todos nullable);
+    `startedAt`/`endedAt` continuam os limites do evento — nos eventos automáticos,
+    `startedAt === occurredAt`. `@@unique([cameraId, type, occurredAt])` é a chave de upsert da
+    finalização.
+  - `Alert`: `onDelete: Cascade` na FK para `Event` (Fatia C) — apagar um evento obsoleto na
+    finalização apaga o alerta junto.
   - `DailySummary`: `recordingDayId` (nullable, único); gerado quando o `RecordingDay` fica
     `completed`.
 - Comandos: `npx prisma generate`, `npx prisma migrate dev --name <nome>`,
@@ -272,12 +374,15 @@ tabelas e campos), `requisitos.md` (upload/link, lote do dia, retenção, LGPD) 
   etapa por vez** e parar para revisão.
 - **Roteiro atual** (Python/visão por último; trabalho por fatia, backend + frontend juntos, uma
   fatia por vez com revisão): Etapas 1–3 prontas (modelo, endpoints, fila/worker).
-  - **A** — envio de gravações e lotes (front) — *feita*.
+  - **A** — envio de gravações e lotes (front) — _feita_.
   - **B** — regras e áreas: CRUD completo, novos tipos de evento (carro parado, criança
-    correndo, dejeto de animal), imagem de referência da câmera e editor de polígonos.
+    correndo, dejeto de animal), imagem de referência da câmera e editor de polígonos —
+    _feita_.
   - **C** — detecção simulada → eventos: contrato `Detector`, detector simulado por JSON,
     intervalos por segmento, fusão entre segmentos, eventos, alertas, `Event.status`
-    (`pending`/`inProgress`/`resolved`), ffprobe (`ffmpeg-static`/`ffprobe-static`).
+    (`pending`/`inProgress`/`resolved`), ffprobe (`ffmpeg-static`/`ffprobe-static`), sugestão
+    de horário do segmento pelo nome do arquivo e avisos de lacuna/sobreposição na cobertura
+    do dia — _feita_.
   - **D** — dashboard e histórico (wireframes em `docs/wireframes/`).
   - **E** — clipes/thumbnails (FFmpeg), MinIO, retenção e log de acesso (LGPD).
   - **F** — resumo do dia com Ollama.

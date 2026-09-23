@@ -75,6 +75,21 @@ export async function apiFetch<T = unknown>(
   return (await apiRequest<T>(path, options)).data;
 }
 
+// For bytes that must be authenticated (e.g. a camera's reference image).
+// A bare `<img src="http://api/...">` would need `crossOrigin="use-credentials"`
+// to carry the auth cookie; fetching as a Blob and building an object URL
+// keeps auth handling in one place, like every other request here.
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const data = parseBody(await res.text());
+    throw new ApiError(res.status, errorMessage(data));
+  }
+  return await res.blob();
+}
+
 type UploadOptions = {
   onProgress?: (fraction: number) => void;
   signal?: AbortSignal;
@@ -115,4 +130,19 @@ export function apiUpload<T = unknown>(
     signal?.addEventListener("abort", () => xhr.abort(), { once: true });
     xhr.send(formData);
   });
+}
+
+// Small, synchronous image upload (camera reference image) — no progress
+// reporting needed, so plain `fetch` is enough.
+export async function apiUploadImage(path: string, file: File): Promise<void> {
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  if (res.status === 204) return;
+  const data = parseBody(await res.text());
+  throw new ApiError(res.status, errorMessage(data));
 }

@@ -32,6 +32,11 @@ Status:
 - Segmento: `received` → `processing` → `completed` | `failed` (com contagem de tentativas).
 - Lote: `pending` → `processing` → `completed` | `partial` (alguns segmentos falharam) | `failed`.
 
+**Cobertura do dia:** com a duração real de cada segmento (ffprobe), a API confere se os segmentos do lote se encaixam
+sem buraco nem sobreposição (tolerância curta, poucos segundos) e devolve os avisos no detalhe do lote — não bloqueia o
+envio. A mesma checagem de contiguidade decide se um evento pode atravessar a borda entre dois segmentos na fusão
+(abaixo); segmento sem duração conhecida nunca é fundido/cruzado.
+
 ## Fluxo de processamento
 
 1. **Entrada:** upload direto (preferir upload em partes/retomável para arquivos grandes) ou **link** (Drive, OneDrive, servidor do condomínio). No link, o servidor baixa em streaming, validando domínio permitido e tamanho antes de baixar.
@@ -74,14 +79,15 @@ Status:
 
 Endpoints de lote/segmento (prefixo `/api`; escrita só para gestores, leitura para usuários autenticados):
 
-| Rota                                              | Função                                                                               |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `POST /recording-days`                            | busca ou cria o lote (câmera + dia)                                                  |
-| `GET /recording-days` · `GET /recording-days/:id` | lista lotes / detalha lote com segmentos e progresso                                 |
-| `GET /recording-days/:id/events`                  | eventos do dia, por horário real                                                     |
-| `POST /recording-days/:id/segments/link`          | anexa segmento por link (https + domínios permitidos)                                |
-| `POST /recording-days/:id/segments/upload`        | anexa segmento por upload multipart em streaming (hash SHA-256; reenvio não duplica) |
-| `POST /segments/:id/reprocess`                    | reprocessa um segmento `failed`                                                      |
+| Rota                                              | Função                                                                                       |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `POST /recording-days`                            | busca ou cria o lote (câmera + dia)                                                          |
+| `GET /recording-days` · `GET /recording-days/:id` | lista lotes / detalha lote com segmentos e progresso                                         |
+| `GET /recording-days/:id/events`                  | eventos do dia, por horário real                                                             |
+| `POST /recording-days/:id/segments/link`          | anexa segmento por link (https + domínios permitidos)                                        |
+| `POST /recording-days/:id/segments/upload`        | anexa segmento por upload multipart em streaming (hash SHA-256; reenvio não duplica)         |
+| `POST /segments/:id/reprocess`                    | reprocessa um segmento `failed` ou `completed` (redetecta sem reenviar o arquivo)            |
+| `PATCH /events/:id`                               | muda o status de um evento (`pending`/`inProgress`/`resolved`; qualquer usuário autenticado) |
 
 ### 4. Fila (BullMQ + Redis)
 
@@ -91,7 +97,18 @@ Endpoints de lote/segmento (prefixo `/api`; escrita só para gestores, leitura p
 - **Recuperação:** se o Redis estiver fora quando o segmento é criado, a API ainda responde `202` e o segmento fica `received`; o worker re-enfileira segmentos `received` e `processing` parados ao iniciar e a cada intervalo.
 - **Download de link:** somente https, domínio na allowlist, cada redirecionamento revalidado e destino resolvendo para IP público (proteção contra SSRF/DNS rebinding); tamanho conferido antes e durante o download; funciona apenas com links de download direto (links de compartilhamento que devolvem HTML são rejeitados).
 - Conteúdo duplicado (mesmo hash já existente no lote) é detectado após o download: o segmento é concluído sem reprocessar, para não duplicar eventos.
-- O passo "processar" ainda é um stub. A detecção fica atrás de um contrato `Detector` (por frame: rótulo, caixa normalizada, confiança, tempo no vídeo): primeiro entra um **detector simulado** que lê detecções de arquivos JSON, permitindo construir e validar regras, eventos, clipes e telas sem o Python; o serviço Python de visão (YOLO) implementa o mesmo contrato por último e é selecionado por variável de ambiente.
+- Detecção atrás de um contrato `Detector` (por frame: rótulo, caixa normalizada, confiança, tempo no vídeo), selecionado
+  por variável de ambiente. Hoje só existe o **detector simulado**: lê as detecções de um JSON por segmento
+  (`storage/uploads/<segmentId>.json`); sem arquivo, nenhuma detecção (seguro para uploads reais). O serviço Python de
+  visão (YOLO) implementa o mesmo contrato por último.
+- Cada detecção crua vira 0+ candidatos de tipo de evento (rótulo bate com o exigido pelo tipo e, se o tipo precisar de
+  área, o centro da caixa está dentro/fora — conforme o tipo — de uma área da câmera do tipo certo, testada com as áreas
+  configuradas **no momento do processamento**). Candidatos do mesmo tipo, próximos no tempo, são fundidos num
+  intervalo por segmento (tolerância curta, dentro do próprio segmento).
+- Ao final do lote (todos os segmentos `completed`/`failed`), uma **finalização** funde os intervalos de segmentos
+  **contíguos** (mesma tolerância dos avisos de cobertura, abaixo) do mesmo tipo, aplica o tempo limite da regra ativa
+  da câmera, e grava/atualiza o evento — sem duplicar em reprocessamentos e sem apagar o status que o usuário já tiver
+  definido. Roda inline (sem fila: é só banco/CPU), disparada quando o lote termina ou quando uma regra é salva.
 
 ### 5. Armazenamento de objetos (MinIO)
 

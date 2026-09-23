@@ -5,8 +5,10 @@ import * as userController from "../controllers/user.controller.ts";
 import * as condominiumController from "../controllers/condominium.controller.ts";
 import * as cameraController from "../controllers/camera.controller.ts";
 import * as ruleController from "../controllers/rule.controller.ts";
+import * as areaController from "../controllers/area.controller.ts";
 import * as recordingDayController from "../controllers/recording-day.controller.ts";
 import * as segmentController from "../controllers/segment.controller.ts";
+import * as eventController from "../controllers/event.controller.ts";
 import { requireAuth } from "../middleware/require-auth.ts";
 import { requireAdmin } from "../middleware/require-admin.ts";
 import { authLimiter, requestLimiter } from "../middleware/rate-limit.ts";
@@ -101,6 +103,12 @@ routes.get(
   requireManager,
   cameraController.listCameras,
 );
+routes.get(
+  "/cameras/:id",
+  requireAuth,
+  requireManager,
+  cameraController.getCamera,
+);
 routes.patch(
   "/cameras/:id/reactivate",
   requireAuth,
@@ -119,9 +127,58 @@ routes.patch(
   requireManager,
   cameraController.updateCamera,
 );
+routes.post(
+  "/cameras/:id/reference-image",
+  requireAuth,
+  requireManager,
+  cameraController.uploadReferenceImage,
+);
+routes.get(
+  "/cameras/:id/reference-image",
+  requireAuth,
+  requireManager,
+  cameraController.getReferenceImage,
+);
 
 // RULES ROUTES
-routes.post("/rules", requireAuth, requireManager, ruleController.addRule);
+routes.get(
+  "/cameras/:id/rules",
+  requireAuth,
+  requireManager,
+  ruleController.listRules,
+);
+routes.put(
+  "/cameras/:id/rules/:eventType",
+  requireAuth,
+  requireManager,
+  ruleController.upsertRule,
+);
+
+// AREAS ROUTES
+routes.get(
+  "/cameras/:id/areas",
+  requireAuth,
+  requireManager,
+  areaController.listAreas,
+);
+routes.post(
+  "/cameras/:id/areas",
+  requireAuth,
+  requireManager,
+  areaController.createArea,
+);
+routes.patch(
+  "/areas/:id",
+  requireAuth,
+  requireManager,
+  areaController.updateArea,
+);
+routes.delete(
+  "/areas/:id",
+  requireAuth,
+  requireManager,
+  areaController.deleteArea,
+);
 
 // RECORDING DAY (BATCH) ROUTES
 routes.post(
@@ -165,3 +222,8 @@ routes.post(
   requireManager,
   segmentController.reprocessSegment,
 );
+
+// EVENT ROUTES
+// Any authenticated role: operational triage (mark seen/resolved), not camera
+// configuration — unlike rules/areas/segments above, which stay manager-only.
+routes.patch("/events/:id", requireAuth, eventController.updateEventStatus);

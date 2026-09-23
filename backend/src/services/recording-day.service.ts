@@ -1,10 +1,12 @@
 import { AppError } from "../lib/app-error.ts";
+import { computeCoverage } from "../lib/compute-coverage.ts";
 import { computeDayStatus } from "../lib/compute-day-status.ts";
 import { isUniqueViolation } from "../lib/is-unique-violation.ts";
 import { prisma } from "../lib/prisma.ts";
 import type { ListRecordingDaysFilters } from "../schemas/list-recording-days-schema.ts";
 import type { SegmentStatus } from "../../generated/prisma/client.ts";
 import { findCameraById } from "./camera.service.ts";
+import { finalizeRecordingDay } from "./recording-day-finalization.service.ts";
 
 const recordingDaySelect = {
   id: true,
@@ -37,6 +39,7 @@ const eventSelect = {
   id: true,
   cameraId: true,
   type: true,
+  status: true,
   technicalDescription: true,
   startedAt: true,
   endedAt: true,
@@ -153,7 +156,9 @@ export const getRecordingDay = async (recordingDayId: string) => {
     progress.total += 1;
   }
 
-  return { ...recordingDay, progress };
+  const coverage = computeCoverage(recordingDay.segments);
+
+  return { ...recordingDay, progress, coverage };
 };
 
 export const listDayEvents = async (recordingDayId: string) => {
@@ -166,8 +171,13 @@ export const listDayEvents = async (recordingDayId: string) => {
   });
 };
 
-// Recomputes the day's status from its segments. The Etapa 3 worker calls this
-// after each segment finishes.
+// Recomputes the day's status from its segments. The worker calls this after
+// each segment finishes; the API calls it on segment create/reprocess too
+// (harmless before anything has run — status just stays `pending`).
+// Once every segment has reached a terminal state (`completed`/`partial`),
+// this also re-runs the finalization pass (Passo B: fuse detection intervals
+// into events) — cheap enough (DB + JS, no video work) to do inline here,
+// without a queue.
 export const refreshRecordingDayStatus = async (recordingDayId: string) => {
   const segments = await prisma.segment.findMany({
     where: { recordingDayId },
@@ -179,5 +189,10 @@ export const refreshRecordingDayStatus = async (recordingDayId: string) => {
     where: { id: recordingDayId },
     data: { status },
   });
+
+  if (status === "completed" || status === "partial") {
+    await finalizeRecordingDay(recordingDayId);
+  }
+
   return status;
 };
