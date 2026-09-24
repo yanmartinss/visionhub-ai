@@ -153,6 +153,12 @@ routes.put(
   requireManager,
   ruleController.upsertRule,
 );
+routes.delete(
+  "/cameras/:id/rules/:eventType",
+  requireAuth,
+  requireManager,
+  ruleController.deleteRule,
+);
 
 // AREAS ROUTES
 routes.get(

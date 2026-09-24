@@ -38,3 +38,16 @@ export const upsertRule: RequestHandler = async (req, res, next) => {
     next(err);
   }
 };
+
+export const deleteRule: RequestHandler = async (req, res, next) => {
+  const params = eventTypeParamSchema.safeParse(req.params);
+  if (!params.success)
+    return res.status(400).json({ error: "Invalid camera id or event type" });
+
+  try {
+    await ruleService.deleteRule(params.data.id, params.data.eventType);
+    return res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+};

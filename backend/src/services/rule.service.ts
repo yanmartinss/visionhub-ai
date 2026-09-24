@@ -25,6 +25,22 @@ export const listRulesByCamera = async (cameraId: string) => {
   });
 };
 
+// A rule change doesn't require reprocessing video (detection intervals are
+// already stored) — just re-run the finalization pass for this camera's recent
+// finished batches so the change takes effect. Inline (no queue): DB + JS
+// only. Capped defensively for cameras with a long history.
+const refinalizeRecentDays = async (cameraId: string) => {
+  const affectedDays = await prisma.recordingDay.findMany({
+    where: { cameraId, status: { in: ["completed", "partial"] } },
+    select: { id: true },
+    orderBy: { date: "desc" },
+    take: 20,
+  });
+  for (const day of affectedDays) {
+    await finalizeRecordingDay(day.id);
+  }
+};
+
 // Create-or-update: one rule per (camera, eventType), enforced by the unique
 // index. Fields left out of `data` keep their current value on an update.
 export const upsertRule = async (
@@ -50,20 +66,24 @@ export const upsertRule = async (
     select: ruleSelect,
   });
 
-  // A rule edit doesn't require reprocessing video (detection intervals are
-  // already stored) — just re-run the finalization pass for this camera's
-  // recent finished batches so the new time limit/active flag takes effect.
-  // Inline (no queue): DB + JS only. Capped defensively for cameras with a
-  // long history.
-  const affectedDays = await prisma.recordingDay.findMany({
-    where: { cameraId, status: { in: ["completed", "partial"] } },
-    select: { id: true },
-    orderBy: { date: "desc" },
-    take: 20,
-  });
-  for (const day of affectedDays) {
-    await finalizeRecordingDay(day.id);
-  }
+  await refinalizeRecentDays(cameraId);
 
   return rule;
+};
+
+// Physical delete. Areas are kept (they belong to the camera, not the rule);
+// events this rule produced are pruned by the re-finalization.
+export const deleteRule = async (
+  cameraId: string,
+  eventType: EventTypeValue,
+) => {
+  const camera = await findCameraById(cameraId);
+  if (!camera) throw new AppError(404, "Camera not found");
+
+  const { count } = await prisma.rule.deleteMany({
+    where: { cameraId, eventType },
+  });
+  if (count === 0) throw new AppError(404, "Rule not found");
+
+  await refinalizeRecentDays(cameraId);
 };

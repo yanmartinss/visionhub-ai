@@ -7,6 +7,8 @@ type Props = {
   imageUrl: string | null;
   areas: Area[];
   disabled?: boolean;
+  // When set, new areas are always of this type and the type selector is hidden.
+  fixedType?: AreaType;
   onCreate: (type: AreaType, polygon: AreaPoint[]) => Promise<void>;
   onDelete: (areaId: string) => Promise<void>;
 };
@@ -18,11 +20,13 @@ function PolygonEditor({
   imageUrl,
   areas,
   disabled,
+  fixedType,
   onCreate,
   onDelete,
 }: Props) {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [drawType, setDrawType] = useState<AreaType>("restricted");
+  const [chosenType, setDrawType] = useState<AreaType>("restricted");
+  const drawType = fixedType ?? chosenType;
   const [points, setPoints] = useState<AreaPoint[]>([]);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -86,19 +90,21 @@ function PolygonEditor({
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <select
-          aria-label="Tipo da nova área"
-          value={drawType}
-          onChange={(event) => setDrawType(event.target.value as AreaType)}
-          disabled={disabled || drawing}
-          className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500 focus:outline-none disabled:opacity-60"
-        >
-          {AREA_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {AREA_TYPE_INFO[type].label}
-            </option>
-          ))}
-        </select>
+        {!fixedType && (
+          <select
+            aria-label="Tipo da nova área"
+            value={drawType}
+            onChange={(event) => setDrawType(event.target.value as AreaType)}
+            disabled={disabled || drawing}
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500 focus:outline-none disabled:opacity-60"
+          >
+            {AREA_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {AREA_TYPE_INFO[type].label}
+              </option>
+            ))}
+          </select>
+        )}
         {drawing ? (
           <>
             <span className="text-xs text-slate-500">

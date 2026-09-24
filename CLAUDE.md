@@ -136,23 +136,29 @@ papéis; escrita só gestor/admin (a API bloqueia com 403). As mensagens da API 
 traduzidas em `lib/messages.ts`. Datas de lote (`RecordingDay.date`) chegam como meia-noite
 UTC e devem ser formatadas em UTC (`formatDay`). O `ApiError` traz o `status` HTTP.
 
-Tela de regras e áreas por câmera (Fatia B): `/cameras/:id/rules` (só gestor/admin, aberta
-pelo botão "Regras e áreas" na tabela de câmeras). Junta upload/troca da imagem de referência
-(`lib/api.ts` → `apiUploadImage`; bytes buscados como Blob autenticado via `apiFetchBlob` e
-exibidos com `URL.createObjectURL`, nunca `<img src="…">` direto — evita o problema de cookie
-em `<img>` cross-origin), o editor de polígonos (`components/PolygonEditor.tsx`: clique
-adiciona ponto em coordenadas normalizadas [0,1], "Finalizar área" fecha o polígono; editar =
-apagar e redesenhar, sem arrastar vértice) e o painel de regras (`components/RulesPanel.tsx`:
-uma linha por tipo de evento, com campo de minutos quando exigido, toggle ativo e aviso se
-falta área do tipo necessário). Metadados de exigência (`lib/eventTypes.ts`) espelham
-`backend/src/lib/event-types.ts`.
+Tela de regras por câmera (Fatia B, refeita como assistente): `/cameras/:id/rules` (só
+gestor/admin, aberta pelo botão "Regras e áreas" na tabela de câmeras). A página
+(`pages/CameraRulesPage.tsx`) lista só os monitoramentos já configurados
+(`components/MonitoringList.tsx`: frase em linguagem natural via `describeRule`, interruptor
+Ativar/Desativar que faz `PUT` na hora reenviando `timeLimitSeconds`, "Editar" e aviso âmbar se
+falta a área do tipo); "Adicionar monitoramento" abre o assistente (`components/RuleWizard.tsx`,
+modal): O que monitorar → Onde (só tipos com área: envio da imagem de referência se faltar +
+`PolygonEditor` com `fixedType`, "Continuar" exige ≥1 área do tipo) → Tempo (só tipos com
+`requiresTimeLimit`) → Revisão ("Ativar agora" + "Concluir" faz o `PUT`). Passos que não se
+aplicam são pulados; editar abre com o tipo travado. Áreas são criadas na hora no passo "Onde"
+(cancelar não as desfaz); "Excluir" (lixeira, com `confirm`) chama `DELETE /cameras/:id/rules/:eventType`; `other` fica fora do assistente.
+Imagem de referência (`apiUploadImage`): bytes buscados como Blob autenticado via
+`apiFetchBlob` e exibidos com `URL.createObjectURL`, nunca `<img src="…">` direto (cookie em
+`<img>` cross-origin). `PolygonEditor`: clique adiciona ponto em coordenadas normalizadas
+[0,1], "Finalizar área" fecha; editar = apagar e redesenhar. Textos e exigências por tipo
+(`lib/eventTypes.ts`) espelham `backend/src/lib/event-types.ts`.
 
 Seção "Eventos" e faixa de avisos de cobertura na tela de gravações (Fatia C):
 `pages/RecordingDetailPage.tsx` busca `GET /recording-days/:id/events` no mesmo ciclo do
 `refresh()` (sem polling dedicado) e lista tipo/horário/confiança/status
 (`components/StatusBadge.tsx` → `EventStatusBadge`), com um `<select>` que chama
 `PATCH /events/:id` — liberado a qualquer papel, diferente do resto da tela. A faixa de avisos
-(`day.coverage.issues`) usa o mesmo estilo âmbar/`AlertTriangle` do `RulesPanel`.
+(`day.coverage.issues`) usa o mesmo estilo âmbar/`AlertTriangle` do `MonitoringList`.
 `components/AddSegmentForm.tsx` tenta `lib/infer-started-at.ts` ao escolher o arquivo e
 pré-preenche "Horário de início" com um aviso (sempre editável).
 
@@ -193,6 +199,8 @@ Endpoints de câmera, regras e áreas (Fatia B; todos `requireAuth` + `requireMa
 - `PUT /api/cameras/:id/rules/:eventType` — upsert `{timeLimitSeconds?, active?}` (uma regra
   por câmera+tipo, `Rule.@@unique([cameraId, eventType])`); a exigência de `timeLimitSeconds`
   depende do tipo (ver tabela em `docs/database.md` e `lib/event-types.ts`).
+- `DELETE /api/cameras/:id/rules/:eventType` — delete físico (204; 404 se não existe) e
+  refinaliza os lotes recentes, o que remove os eventos que a regra gerava; áreas ficam.
 - `GET /api/cameras/:id/areas`, `POST /api/cameras/:id/areas` `{type, polygon}` (polígono em
   coordenadas normalizadas [0,1], 3–20 pontos), `PATCH /api/areas/:id`, `DELETE
 /api/areas/:id` (delete físico — `Area` não tem `active`, não é referenciada por outra

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { apiFetch, apiFetchBlob, apiUploadImage, ApiError } from "../lib/api";
+import { EVENT_TYPE_INFO } from "../lib/eventTypes";
 import { describeError } from "../lib/messages";
 import type {
   Area,
@@ -11,8 +12,10 @@ import type {
   EventType,
   Rule,
 } from "../lib/types";
-import PolygonEditor from "../components/PolygonEditor";
-import RulesPanel from "../components/RulesPanel";
+import MonitoringList from "../components/MonitoringList";
+import RuleWizard from "../components/RuleWizard";
+
+type WizardState = { editingType: EventType | null } | null;
 
 function CameraRules({ id }: { id: string }) {
   const [camera, setCamera] = useState<CameraOption | null>(null);
@@ -22,9 +25,8 @@ function CameraRules({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [imageError, setImageError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [busyType, setBusyType] = useState<EventType | null>(null);
+  const [wizard, setWizard] = useState<WizardState>(null);
   const objectUrlRef = useRef<string | null>(null);
 
   const loadImage = useCallback(
@@ -111,20 +113,9 @@ function CameraRules({ id }: { id: string }) {
     };
   }, [id, loadImage]);
 
-  async function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setUploadingImage(true);
-    setImageError(null);
-    try {
-      await apiUploadImage(`/cameras/${id}/reference-image`, file);
-      await load();
-    } catch (err) {
-      setImageError(describeError(err, "Erro ao enviar a imagem."));
-    } finally {
-      setUploadingImage(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+  async function uploadImage(file: File) {
+    await apiUploadImage(`/cameras/${id}/reference-image`, file);
+    await load();
   }
 
   async function createArea(type: AreaType, polygon: AreaPoint[]) {
@@ -149,6 +140,47 @@ function CameraRules({ id }: { id: string }) {
       body: data,
     });
     await load();
+  }
+
+  async function toggleRule(rule: Rule) {
+    setBusyType(rule.eventType);
+    setError(null);
+    try {
+      // Types with a time limit require it on every save, so resend it.
+      await saveRule(rule.eventType, {
+        active: !rule.active,
+        ...(EVENT_TYPE_INFO[rule.eventType].requiresTimeLimit &&
+        rule.timeLimitSeconds
+          ? { timeLimitSeconds: rule.timeLimitSeconds }
+          : {}),
+      });
+    } catch (err) {
+      setError(describeError(err, "Erro ao salvar a regra."));
+    } finally {
+      setBusyType(null);
+    }
+  }
+
+  async function removeRule(rule: Rule) {
+    const label = EVENT_TYPE_INFO[rule.eventType].label;
+    if (
+      !window.confirm(
+        `Excluir o monitoramento “${label}”? Os eventos já gerados por ele nos dias processados também serão removidos. As áreas desenhadas continuam salvas.`,
+      )
+    )
+      return;
+    setBusyType(rule.eventType);
+    setError(null);
+    try {
+      await apiFetch(`/cameras/${id}/rules/${rule.eventType}`, {
+        method: "DELETE",
+      });
+      await load();
+    } catch (err) {
+      setError(describeError(err, "Erro ao excluir a regra."));
+    } finally {
+      setBusyType(null);
+    }
   }
 
   if (loading) return <p className="text-sm text-slate-500">Carregando…</p>;
@@ -180,10 +212,24 @@ function CameraRules({ id }: { id: string }) {
         Câmeras
       </Link>
 
-      <h1 className="mt-3 font-serif text-2xl font-bold text-slate-900">
-        Regras e áreas · {camera.name}
-      </h1>
-      <p className="mt-1 text-sm text-slate-500">{camera.location}</p>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-2xl font-bold text-slate-900">
+            O que esta câmera monitora
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {camera.name} · {camera.location}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setWizard({ editingType: null })}
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          <Plus className="h-4 w-4" />
+          Adicionar monitoramento
+        </button>
+      </div>
 
       {error && (
         <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
@@ -191,58 +237,31 @@ function CameraRules({ id }: { id: string }) {
         </p>
       )}
 
-      <h2 className="mt-8 font-serif text-lg font-bold text-slate-900">
-        Imagem de referência
-      </h2>
-      <p className="mt-1 text-sm text-slate-500">
-        Uma foto parada da câmera, usada de fundo para marcar as áreas abaixo.
-        Não é o vídeo enviado nas gravações.
-      </p>
-
-      <div className="mt-3">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(event) => void handleImageChange(event)}
-          disabled={uploadingImage}
-          className="hidden"
-          id="reference-image-input"
-        />
-        <label
-          htmlFor="reference-image-input"
-          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 ${uploadingImage ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <Upload className="h-4 w-4" />
-          {uploadingImage
-            ? "Enviando…"
-            : camera.hasReferenceImage
-              ? "Trocar imagem"
-              : "Enviar imagem"}
-        </label>
-        {imageError && (
-          <p className="mt-2 text-sm text-red-600">{imageError}</p>
-        )}
-      </div>
-
-      <h2 className="mt-8 font-serif text-lg font-bold text-slate-900">
-        Áreas
-      </h2>
-      <div className="mt-3">
-        <PolygonEditor
-          imageUrl={imageUrl}
+      <div className="mt-6">
+        <MonitoringList
+          rules={rules}
           areas={areas}
-          onCreate={createArea}
-          onDelete={deleteArea}
+          busyType={busyType}
+          onToggle={(rule) => void toggleRule(rule)}
+          onEdit={(type) => setWizard({ editingType: type })}
+          onDelete={(rule) => void removeRule(rule)}
         />
       </div>
 
-      <h2 className="mt-8 font-serif text-lg font-bold text-slate-900">
-        Regras
-      </h2>
-      <div className="mt-3">
-        <RulesPanel rules={rules} areas={areas} onSave={saveRule} />
-      </div>
+      {wizard && (
+        <RuleWizard
+          editingType={wizard.editingType}
+          rules={rules}
+          areas={areas}
+          hasImage={camera.hasReferenceImage}
+          imageUrl={imageUrl}
+          onUploadImage={uploadImage}
+          onCreateArea={createArea}
+          onDeleteArea={deleteArea}
+          onSave={saveRule}
+          onClose={() => setWizard(null)}
+        />
+      )}
     </div>
   );
 }
