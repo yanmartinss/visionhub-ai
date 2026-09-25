@@ -52,6 +52,7 @@ docker compose up --build
 
 ## Documentação
 
+- [Documento de Requisitos Ágeis](docs/documento-requisitos-ageis.md) (visão, personas, user stories, MoSCoW, riscos, DER)
 - [Requisitos](docs/requisitos.md)
 - [Arquitetura](docs/arquitetura.md)
 - [Backlog](docs/backlog.md)

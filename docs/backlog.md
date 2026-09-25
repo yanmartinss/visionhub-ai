@@ -48,12 +48,35 @@ Formato: `US-ID` · Como [persona], quero [ação], para [benefício].
 - **US22** · Como síndico, quero que os clipes sejam apagados após um período definido, mantendo eventos e thumbnails, para cumprir a LGPD.
 - **US23** · Como síndico, quero que o acesso aos clipes seja restrito por perfil e, se possível, registrado, para saber quem viu imagens de moradores.
 
+## Épico 8 — Acesso e usuários
+
+- **US26** · Como síndico, quero acessar o sistema com e-mail e senha, para ver as informações de acordo com meu perfil.
+- **US27** · Como porteiro, quero solicitar acesso informando nome, e-mail e condomínio, para começar a usar sem cadastro manual.
+- **US28** · Como usuário, quero recuperar e trocar minha senha, para não perder o acesso nem depender do administrador.
+- **US29** · Como administrador, quero criar, listar, editar e desativar usuários, para controlar quem acessa as imagens do condomínio.
+
+## Épico 9 — Prototipação, configuração e IA (complementos)
+
+- **US30** · Como administrador, quero cadastrar, listar, editar e desativar câmeras, para definir o que será monitorado.
+- **US31** · Como síndico, quero navegar por um protótipo das telas antes da implementação, para validar se o fluxo atende à rotina do condomínio.
+- **US32** · Como porteiro, quero mudar o status de um evento (pendente → em andamento → resolvido), para que a equipe saiba o que já foi tratado.
+- **US33** · Como síndico, quero ver por que cada evento foi gerado (objeto, área, regra, duração, confiança, thumbnail), para confiar no alerta.
+- **US34** · Como administrador, quero ver a precisão da IA por tipo de evento, para ajustar regras, áreas e limites.
+- **US35** · Como administrador, quero cadastrar os dados do condomínio, para identificá-lo nos relatórios e resumos.
+- **US36** · Como síndico, quero sugestão de horário pelo nome do arquivo e avisos de lacuna/sobreposição/horário divergente, para não gerar eventos com horário errado.
+- **US37** · Como síndico, quero receber por e-mail o resumo do dia e os alertas graves, para ficar informado sem abrir o sistema.
+
+> A organização completa (épicos, funcionalidades, MoSCoW) está em [documento-requisitos-ageis.md](documento-requisitos-ageis.md).
+
 ## Fase 2 — Tempo real
 
 Fora do MVP. Entra como um novo adaptador (`RtspSource`) atrás da interface `VideoSource`, sem mexer em detecção, regras nem banco.
 
 - **US24** · Como porteiro, quero ver eventos em tempo real vindos das câmeras (RTSP/ONVIF/IP), para agir no momento em que ocorrem.
 - **US25** · Como porteiro, quero receber alertas em tempo real (Socket.IO), para reagir imediatamente.
+- **US38** · Como síndico, quero um aplicativo mobile nativo, para receber alertas no celular.
+- **US39** · Como administrador, quero gerenciar vários condomínios na mesma instalação, para atender toda a carteira da administradora.
+- **US40** · Como síndico, quero integrar catracas e fechaduras, para acionar o portão a partir do sistema.
 
 ---
 
