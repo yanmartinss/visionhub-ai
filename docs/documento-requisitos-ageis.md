@@ -19,6 +19,7 @@
 5. [Product Backlog Prioritário (MoSCoW)](#5-product-backlog-prioritário-moscow)
 6. [Análise de Riscos e Desafios](#6-análise-de-riscos-e-desafios)
 7. [Modelagem do Banco](#7-modelagem-do-banco)
+8. [Sprints e issues no GitHub](#8-sprints-e-issues-no-github)
 
 ---
 
@@ -187,6 +188,7 @@ Como síndica, quero navegar por um protótipo das telas (login, dashboard, grav
 
 **US30 — Gerenciar câmeras** 🗂️
 Como administrador, quero cadastrar, listar, editar e desativar câmeras (nome, localização, imagem de referência) para definir o que será monitorado.
+- História de usuário detalhada (feature): [#52 — CRUD de Câmeras](https://github.com/yanmartinss/visionhub-ai/issues/52)
 
 **US35 — Dados do condomínio** 🗂️
 Como administrador, quero cadastrar e atualizar os dados do condomínio (nome e endereço) para identificar o cliente nos relatórios e resumos.
@@ -194,6 +196,7 @@ Como administrador, quero cadastrar e atualizar os dados do condomínio (nome e 
 **US09 — Configurar regras por câmera** 🗂️ 💼
 Como administrador, quero ativar, desativar, editar e excluir regras de monitoramento por câmera (ex.: tempo máximo de portão aberto) para adaptar o sistema à realidade de cada condomínio.
 - Uma regra por câmera + tipo de evento; mudar a regra recalcula os eventos dos lotes recentes sem reprocessar o vídeo.
+- História de usuário detalhada (feature): [#53 — CRUD de Regras de monitoramento por câmera](https://github.com/yanmartinss/visionhub-ai/issues/53)
 
 **US10 — Marcar áreas na imagem** 🗂️
 Como administrador, quero desenhar áreas (proibido estacionar, estacionamento, lixeira, área restrita) sobre a imagem de referência da câmera para que o sistema saiba onde aplicar cada regra.
@@ -532,3 +535,17 @@ erDiagram
   condomínio no MVP) não têm FK; na Fase 2 (US39, multi-condomínio) `Condominium` passa a ser referenciado por
   `User` e `Camera`.
 - **Planejada:** `ClipAccessLog` (Fatia E, US23) registra quem visualizou cada clipe, para a LGPD.
+
+---
+
+## 8. Sprints e issues no GitHub
+
+| Sprint (milestone)                                                                                          | Entrega    | Issues                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Sprint — Documento de Requisitos Ágeis](https://github.com/yanmartinss/visionhub-ai/milestone/1)           | 25/09/2026 | Uma issue por user story (US01–US40), #7–#46                                                                                                                                                                                                                                                  |
+| [Sprint — Sistema de Autenticação](https://github.com/yanmartinss/visionhub-ai/milestone/2)                 | 02/10/2026 | #47 registro · #48 login (sucesso e erro) · #49 sessão e rotas por perfil · #50 recuperação de senha · #51 vídeo                                                                                                                                                                             |
+| [Sprint — CRUD Câmeras e Regras](https://github.com/yanmartinss/visionhub-ai/milestone/3)                   | 05/10/2026 | Features: [#52 CRUD de Câmeras](https://github.com/yanmartinss/visionhub-ai/issues/52), [#53 CRUD de Regras](https://github.com/yanmartinss/visionhub-ai/issues/53) · Tasks: #54 banco · #55 API de câmeras · #56 tela de câmeras · #57 API de regras · #58 tela de regras · #59 documentação |
+
+**Sprint CRUD — funcionalidades relacionadas:** uma **Câmera** tem N **Regras de monitoramento** (`Rule.cameraId → Camera.id`,
+índice único em `(cameraId, eventType)`). Cada feature descreve a história de usuário com critérios de aceitação no formato
+_Dado / Quando / Então_; as tasks detalham banco, back-end e front-end.
