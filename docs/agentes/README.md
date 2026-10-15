@@ -256,3 +256,37 @@ Modelo — adicione uma linha por pedido e marque quando atendido:
 
 RTSP/ONVIF/tempo real (`RtspSource`), Socket.IO, app mobile, multi-condomínio e integração com
 catracas — tudo Fase 2 (ver `docs/backlog.md`).
+
+## 8. Modo worktree única (3 agentes no mesmo checkout)
+
+Os três agentes (`backend`, `frontend`, `ia-local`) podem rodar **na mesma worktree**
+(`feature-time`), cada um em sua sessão do Claude. Como compartilham arquivos em disco, valem
+regras extras:
+
+- **Cada um edita só o que é seu** (seção 2). Dois agentes nunca editam o mesmo arquivo.
+- **Commits cirúrgicos:** `git add <caminhos do seu agente>` e `git commit`. Nunca `git add -A`,
+  `git add .`, `git stash`, `git reset`, `git checkout -- ...` nem `git clean`: isso levaria o
+  trabalho dos outros. Arquivo modificado que não é seu = trabalho de outro agente; deixe quieto.
+- **Conversa entre agentes:** pedidos e avisos vão por mensagem (abaixo) **e** ficam registrados
+  na tabela da seção 6, que continua sendo a fonte de verdade.
+- **Banco e dependências:** só o backend roda migration; `npm install` de cada pacote é do dono
+  da pasta (`backend/`, `frontend/`, `vision/`).
+- **Quem integra:** o usuário. Os agentes não fazem merge nem push.
+
+### Como mandar mensagem para outro agente
+
+Cada agente recebe, no prompt inicial, o próprio nome e o handle dos outros. Enviar:
+
+```bash
+orca orchestration send --to <handle-do-outro> --subject "<assunto curto>" \
+  --body "<o que precisa, com contrato/formato>" --type request --json
+```
+
+Ler a própria caixa em cada checkpoint (antes de começar um arquivo novo e ao terminar a etapa):
+
+```bash
+orca orchestration check --terminal <seu-handle> --json
+```
+
+Responder com `orca orchestration reply --id <message_id> --body "..."`. Mensagem é aviso, não
+ordem: o dono da pasta decide se e como atende, e registra o resultado na tabela da seção 6.
