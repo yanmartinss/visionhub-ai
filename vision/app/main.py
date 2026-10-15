@@ -4,6 +4,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from . import config
+from .detector import detect_video, yolo_predictor
+from .sampling import VideoOpenError
 
 app = FastAPI(title="VisionHub vision service")
 
@@ -50,6 +52,9 @@ def health() -> dict[str, str]:
 
 @app.post("/detect", response_model=DetectResponse)
 def detect(request: DetectRequest) -> DetectResponse:
-    resolve_video_path(request.filePath)
-    # Etapa 2 pluga a amostragem de frames + YOLO aqui.
-    return DetectResponse(detections=[])
+    path = resolve_video_path(request.filePath)
+    try:
+        detections = detect_video(path, yolo_predictor())
+    except VideoOpenError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    return DetectResponse(detections=[Detection(**item) for item in detections])
