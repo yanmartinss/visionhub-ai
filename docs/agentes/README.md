@@ -168,7 +168,7 @@ type EventListItem = {
       status: "pending" | "processing" | "completed" | "partial" | "failed";
       progress: { total: number; received: number; processing: number; completed: number; failed: number };
     }[];
-    latestEvents: EventListItem[]; // até 10 do dia, occurredAt decrescente
+    latestEvents: EventListItem[]; // até 10 do dia, startedAt decrescente
   }
   ```
 - `400` `"Invalid date"`. Resumo do dia fica fora: usar `GET /api/recording-days/:id/summary`

@@ -9,6 +9,7 @@ import * as areaController from "../controllers/area.controller.ts";
 import * as recordingDayController from "../controllers/recording-day.controller.ts";
 import * as segmentController from "../controllers/segment.controller.ts";
 import * as eventController from "../controllers/event.controller.ts";
+import * as dashboardController from "../controllers/dashboard.controller.ts";
 import { requireAuth } from "../middleware/require-auth.ts";
 import { requireAdmin } from "../middleware/require-admin.ts";
 import { authLimiter, requestLimiter } from "../middleware/rate-limit.ts";
@@ -235,3 +236,7 @@ routes.post(
 routes.get("/events", requireAuth, eventController.listEvents);
 routes.get("/events/:id", requireAuth, eventController.getEvent);
 routes.patch("/events/:id", requireAuth, eventController.updateEventStatus);
+
+// DASHBOARD ROUTES
+// Read-only daily overview for every role (US05), like the recordings reads.
+routes.get("/dashboard", requireAuth, dashboardController.getDashboard);
