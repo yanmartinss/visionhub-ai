@@ -5,6 +5,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ChoosePasswordPage from "./pages/ChoosePasswordPage";
 import DashboardPage from "./pages/DashboardPage";
+import HistoryPage from "./pages/HistoryPage";
 import UsersPage from "./pages/UsersPage";
 import CamerasPage from "./pages/CamerasPage";
 import CameraRulesPage from "./pages/CameraRulesPage";
@@ -43,6 +44,7 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/history" element={<HistoryPage />} />
         <Route path="/recordings" element={<RecordingsPage />} />
         <Route path="/recordings/:id" element={<RecordingDetailPage />} />
         <Route

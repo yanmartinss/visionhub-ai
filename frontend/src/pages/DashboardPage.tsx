@@ -388,12 +388,18 @@ function DashboardPage() {
                       />
                     ))}
                   </ul>
-                  {data.totals.events > data.latestEvents.length && (
-                    <p className="mt-3 text-xs text-slate-500">
-                      Mostrando os {data.latestEvents.length} mais recentes de{" "}
-                      {data.totals.events} eventos.
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                    <p>
+                      {data.totals.events > data.latestEvents.length &&
+                        `Mostrando os ${data.latestEvents.length} mais recentes de ${data.totals.events} eventos.`}
                     </p>
-                  )}
+                    <Link
+                      to={`/history?from=${date}&to=${date}`}
+                      className="font-semibold text-slate-700 underline hover:text-slate-900"
+                    >
+                      Ver todos no histórico
+                    </Link>
+                  </div>
                 </>
               )}
             </section>
