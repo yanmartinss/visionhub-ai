@@ -4,11 +4,46 @@ export function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
+// "domingo, 20 de setembro de 2026" for a batch day (midnight UTC, see above).
+export function formatLongDay(iso: string): string {
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
   });
+}
+
+// Compact "20/09 · 21:42" for event lists (browser timezone).
+export function formatShortDateTime(iso: string): string {
+  const date = new Date(iso);
+  const day = date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  });
+  const time = date.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${day} · ${time}`;
+}
+
+// "há 4 min", "há 1 h 10 min", "há 3 dias" — falls back to the date after a week.
+export function formatRelative(iso: string, now: Date = new Date()): string {
+  const seconds = Math.max(0, (now.getTime() - Date.parse(iso)) / 1000);
+  if (seconds < 60) return "agora há pouco";
+  const days = Math.floor(seconds / 86_400);
+  if (days >= 7) return formatShortDateTime(iso);
+  if (days >= 1) return days === 1 ? "há 1 dia" : `há ${days} dias`;
+  return `há ${formatDuration(seconds)}`;
 }
 
 export function formatTime(date: Date): string {
