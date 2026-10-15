@@ -122,7 +122,7 @@ type EventListItem = {
 - Query (todas opcionais): `from`, `to` (`YYYY-MM-DD`, inclusivos, data do lote; `from ≤ to`),
   `type` (`EventType`), `cameraId` (uuid), `status`, `page` (≥ 1, default 1), `pageSize`
   (1–100, default 20). Filtro de data exclui eventos sem segmento.
-- Ordem: `occurredAt` decrescente.
+- Ordem: `startedAt` decrescente (igual a `occurredAt` nos eventos automáticos; nunca nulo).
 - `200` → `{ items: EventListItem[], total: number, page: number, pageSize: number }`.
 - `400` `"Invalid filters"`.
 

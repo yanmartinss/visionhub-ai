@@ -232,4 +232,5 @@ routes.post(
 // EVENT ROUTES
 // Any authenticated role: operational triage (mark seen/resolved), not camera
 // configuration — unlike rules/areas/segments above, which stay manager-only.
+routes.get("/events", requireAuth, eventController.listEvents);
 routes.patch("/events/:id", requireAuth, eventController.updateEventStatus);

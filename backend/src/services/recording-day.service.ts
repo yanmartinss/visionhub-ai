@@ -6,6 +6,7 @@ import { prisma } from "../lib/prisma.ts";
 import type { ListRecordingDaysFilters } from "../schemas/list-recording-days-schema.ts";
 import type { SegmentStatus } from "../../generated/prisma/client.ts";
 import { findCameraById } from "./camera.service.ts";
+import { eventSelect } from "./event.service.ts";
 import { finalizeRecordingDay } from "./recording-day-finalization.service.ts";
 
 const recordingDaySelect = {
@@ -33,22 +34,6 @@ export const segmentSelect = {
   error: true,
   createdAt: true,
   updatedAt: true,
-} as const;
-
-const eventSelect = {
-  id: true,
-  cameraId: true,
-  type: true,
-  status: true,
-  technicalDescription: true,
-  startedAt: true,
-  endedAt: true,
-  segmentId: true,
-  occurredAt: true,
-  confidence: true,
-  thumbnailPath: true,
-  clipPath: true,
-  createdAt: true,
 } as const;
 
 type Progress = { total: number } & Record<SegmentStatus, number>;
