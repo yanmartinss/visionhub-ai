@@ -41,6 +41,8 @@ const API_MESSAGES: Record<string, string> = {
   "Invalid event id": "Evento inválido.",
   "Invalid event status": "Status de evento inválido.",
   "Event not found": "Evento não encontrado.",
+  "Invalid filters": "Filtros inválidos. Confira o período escolhido.",
+  "Invalid date": "Data inválida.",
 };
 
 export function describeError(err: unknown, fallback: string): string {

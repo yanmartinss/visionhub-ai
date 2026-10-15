@@ -126,3 +126,65 @@ export type DetectedEvent = {
   clipPath: string | null;
   createdAt: string;
 };
+
+// Fatia D contract (docs/agentes/README.md, section 3.3). Dates `YYYY-MM-DD`
+// in queries are the recording day's date, not the event's local time.
+export type EventListItem = {
+  id: string;
+  type: EventType;
+  status: EventStatus;
+  occurredAt: string;
+  startedAt: string;
+  endedAt: string | null;
+  durationSec: number | null;
+  confidence: number | null;
+  technicalDescription: string | null;
+  hasThumbnail: boolean;
+  hasClip: boolean;
+  camera: { id: string; name: string; location: string };
+  // Midnight UTC, like `RecordingDay.date`.
+  recordingDay: { id: string; date: string } | null;
+};
+
+export type EventFilters = {
+  from?: string;
+  to?: string;
+  type?: EventType;
+  cameraId?: string;
+  status?: EventStatus;
+  page?: number;
+  pageSize?: number;
+};
+
+export type EventPage = {
+  items: EventListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type DashboardData = {
+  // Midnight UTC of the requested day.
+  date: string;
+  totals: {
+    events: number;
+    previousDayEvents: number;
+    byType: Record<EventType, number>;
+    byStatus: Record<EventStatus, number>;
+  };
+  // pending + inProgress across all days.
+  openEvents: number;
+  cameras: {
+    active: number;
+    total: number;
+    items: { id: string; name: string; location: string; active: boolean }[];
+  };
+  recordingDays: {
+    id: string;
+    cameraId: string;
+    cameraName: string;
+    status: RecordingDayStatus;
+    progress: SegmentProgressCounts;
+  }[];
+  latestEvents: EventListItem[];
+};
