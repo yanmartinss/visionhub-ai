@@ -32,12 +32,7 @@ import {
 } from "../components/StatusBadge";
 import SegmentProgress from "../components/SegmentProgress";
 import AddSegmentForm from "../components/AddSegmentForm";
-
-const EVENT_STATUS_OPTIONS: { value: EventStatus; label: string }[] = [
-  { value: "pending", label: "Pendente" },
-  { value: "inProgress", label: "Em andamento" },
-  { value: "resolved", label: "Resolvido" },
-];
+import EventStatusSelect from "../components/EventStatusSelect";
 
 function coverageIssueText(issue: CoverageIssue): string {
   if (issue.type === "unknown") {
@@ -378,24 +373,14 @@ function RecordingDetail({ id }: { id: string }) {
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1.5">
                       <EventStatusBadge status={event.status} />
-                      <select
-                        aria-label={`Status de ${EVENT_TYPE_INFO[event.type].label}`}
+                      <EventStatusSelect
+                        label={`Status de ${EVENT_TYPE_INFO[event.type].label}`}
                         value={event.status}
                         disabled={busyEventId === event.id}
-                        onChange={(ev) =>
-                          void changeEventStatus(
-                            event.id,
-                            ev.target.value as EventStatus,
-                          )
+                        onChange={(status) =>
+                          void changeEventStatus(event.id, status)
                         }
-                        className="w-32 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs focus:border-slate-500 focus:outline-none disabled:opacity-60"
-                      >
-                        {EVENT_STATUS_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </div>
                   </td>
                 </tr>
