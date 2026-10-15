@@ -273,20 +273,28 @@ regras extras:
   da pasta (`backend/`, `frontend/`, `vision/`).
 - **Quem integra:** o usuário. Os agentes não fazem merge nem push.
 
-### Como mandar mensagem para outro agente
+### Como mandar mensagem para outro agente (caixas em arquivo)
 
-Cada agente recebe, no prompt inicial, o próprio nome e o handle dos outros. Enviar:
+Sessões de chat não são endereçáveis entre si, mas os três agentes **compartilham o disco**.
+A conversa é por arquivos na raiz da worktree, em `.agentes-chat/` (fora do git via
+`.git/info/exclude`; nunca commitar):
 
-```bash
-orca orchestration send --to <handle-do-outro> --subject "<assunto curto>" \
-  --body "<o que precisa, com contrato/formato>" --type request --json
+```
+.agentes-chat/backend.md     # mensagens PARA o backend
+.agentes-chat/frontend.md    # mensagens PARA o frontend
+.agentes-chat/ia-local.md    # mensagens PARA a IA local
 ```
 
-Ler a própria caixa em cada checkpoint (antes de começar um arquivo novo e ao terminar a etapa):
+- **Enviar:** acrescente (append, nunca sobrescreva) ao final do arquivo do destinatário:
 
-```bash
-orca orchestration check --terminal <seu-handle> --json
-```
+  ```
+  ## 2026-10-15 14:32 · de: frontend · assunto: campo cameraName em GET /events
+  Texto objetivo, com o contrato/formato esperado.
+  Status: aberto
+  ```
 
-Responder com `orca orchestration reply --id <message_id> --body "..."`. Mensagem é aviso, não
-ordem: o dono da pasta decide se e como atende, e registra o resultado na tabela da seção 6.
+- **Ler:** abra o **seu** arquivo a cada checkpoint (antes de um arquivo novo e ao fechar a
+  etapa) e ao começar o trabalho. Ao atender, acrescente `Status: atendido — <o que mudou>`
+  logo abaixo da mensagem.
+- Mensagem é aviso, não ordem: o dono da pasta decide se e como atende. O que for pedido
+  entre agentes também vai para a tabela da seção 6.
