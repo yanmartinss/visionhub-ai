@@ -82,11 +82,97 @@ começar com mock no mesmo formato.
 | Endpoint (proposta)                        | Fatia | Uso no front                                         |
 | ------------------------------------------ | ----- | ---------------------------------------------------- |
 | `GET /api/dashboard?date=YYYY-MM-DD`       | D     | contadores por tipo/status, lotes do dia, últimos eventos |
-| `GET /api/events?from&to&type&cameraId&status&page` | D | histórico paginado com filtros                      |
+| `GET /api/events?from&to&type&cameraId&status&page&pageSize` | D | histórico paginado com filtros (formato abaixo) |
 | `GET /api/events/:id`                      | D/US33 | detalhe "por que este evento" (área, regra, duração, confiança) |
 | `GET /api/events/:id/clip`, `/thumbnail`   | E     | bytes via `apiFetchBlob` (nunca `<img src>` direto)  |
 | `GET /api/recording-days/:id/summary`      | F     | resumo do dia no detalhe do lote / dashboard         |
 | `GET /api/stats/accuracy`                  | US34  | precisão por tipo de evento                          |
+
+#### Fatia D — formato registrado
+
+Os três endpoints exigem só `requireAuth` (qualquer papel, como a leitura de lotes). Datas
+`YYYY-MM-DD` referem-se à **data do lote** (`RecordingDay.date`), não ao horário do evento: sem
+conversão de fuso e coerente com a tela de gravações. Um evento que atravessa a meia-noite
+pertence ao lote do segmento em que começou. Timestamps vêm em ISO 8601 UTC; `date` do lote
+chega como meia-noite UTC (formatar em UTC, como `formatDay`). Erros seguem o padrão
+`{ error: "<mensagem em inglês>" }`.
+
+Item de evento (`EventListItem`, usado na lista, no detalhe e no dashboard):
+
+```ts
+type EventListItem = {
+  id: string;
+  type: EventType; // "gateOpen" | "occupancy" | ... (lib/event-types.ts)
+  status: "pending" | "inProgress" | "resolved";
+  occurredAt: string; // horário real de início
+  startedAt: string; // === occurredAt nos eventos automáticos
+  endedAt: string | null;
+  durationSec: number | null; // endedAt − startedAt, arredondado
+  confidence: number | null; // 0..1
+  technicalDescription: string | null; // frase em pt-BR
+  hasThumbnail: boolean; // bytes na Fatia E
+  hasClip: boolean;
+  camera: { id: string; name: string; location: string };
+  recordingDay: { id: string; date: string } | null; // null só se o evento não tiver segmento
+};
+```
+
+**`GET /api/events`** — histórico paginado (US06).
+
+- Query (todas opcionais): `from`, `to` (`YYYY-MM-DD`, inclusivos, data do lote; `from ≤ to`),
+  `type` (`EventType`), `cameraId` (uuid), `status`, `page` (≥ 1, default 1), `pageSize`
+  (1–100, default 20). Filtro de data exclui eventos sem segmento.
+- Ordem: `occurredAt` decrescente.
+- `200` → `{ items: EventListItem[], total: number, page: number, pageSize: number }`.
+- `400` `"Invalid filters"`.
+
+**`GET /api/events/:id`** — detalhe "por que este evento foi gerado" (US33).
+
+- `200` → `EventListItem &`
+  ```ts
+  {
+    detectionLabel: string | null; // rótulo do detector, ex.: "car"
+    containment: "inside" | "outside" | null; // centro da caixa dentro/fora das áreas; null = câmera inteira
+    rule: { timeLimitSeconds: number | null; active: boolean } | null; // regra ATUAL da câmera p/ o tipo
+    areas: { id: string; type: AreaType; polygon: { x: number; y: number }[] }[]; // áreas do tipo exigido (pode haver várias)
+    segment: { id: string; startedAt: string } | null;
+    offsetSec: number | null; // posição do início do evento dentro do vídeo do segmento
+  }
+  ```
+- Limitação: o backend não sabe **qual** área disparou o evento — `areas` lista todas as do tipo.
+- `400` `"Invalid event id"`, `404` `"Event not found"`.
+
+**`GET /api/dashboard`** — painel do dia (US05).
+
+- Query: `date` (`YYYY-MM-DD`, opcional; default = hoje em `America/Sao_Paulo`).
+- `200` →
+  ```ts
+  {
+    date: string; // meia-noite UTC do dia consultado
+    totals: {
+      events: number; // eventos dos lotes do dia
+      previousDayEvents: number; // mesmo cálculo para o dia anterior ("+3 desde ontem")
+      byType: Record<EventType, number>; // todos os tipos, 0 quando não houver
+      byStatus: { pending: number; inProgress: number; resolved: number };
+    };
+    openEvents: number; // pending + inProgress de TODOS os dias ("Alertas ativos")
+    cameras: {
+      active: number;
+      total: number;
+      items: { id: string; name: string; location: string; active: boolean }[];
+    };
+    recordingDays: {
+      id: string;
+      cameraId: string;
+      cameraName: string;
+      status: "pending" | "processing" | "completed" | "partial" | "failed";
+      progress: { total: number; received: number; processing: number; completed: number; failed: number };
+    }[];
+    latestEvents: EventListItem[]; // até 10 do dia, occurredAt decrescente
+  }
+  ```
+- `400` `"Invalid date"`. Resumo do dia fica fora: usar `GET /api/recording-days/:id/summary`
+  (Fatia F).
 
 ## 4. O que falta, por agente
 
