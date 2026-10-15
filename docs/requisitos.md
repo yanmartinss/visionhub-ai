@@ -10,8 +10,8 @@
 | RF02 | O sistema deve detectar pessoas permanecendo por tempo excessivo em áreas específicas (ex.: portaria, entrada).                                                            | Alta       |
 | RF03 | O sistema deve detectar acesso a áreas marcadas como restritas.                                                                                                            | Alta       |
 | RF04 | O sistema deve detectar objetos abandonados em áreas monitoradas.                                                                                                          | Média      |
-| RF05 | O sistema deve exibir um dashboard com os eventos do dia, disponíveis assim que o lote (ou cada segmento) é processado.                                                    | Alta       |
-| RF06 | O sistema deve manter um histórico consultável de eventos detectados.                                                                                                      | Alta       |
+| RF05 | O sistema deve exibir um dashboard com os eventos do dia (contadores por tipo e status, pendências, câmeras e lotes), disponíveis assim que o lote é processado.          | Alta       |
+| RF06 | O sistema deve manter um histórico consultável de eventos detectados, com filtros por data, câmera, tipo e status, e mostrar por que cada evento foi gerado.             | Alta       |
 | RF07 | O sistema deve emitir alertas automáticos quando um evento relevante for identificado durante o processamento de um lote.                                                  | Alta       |
 | RF08 | O sistema deve gerar, quando todos os segmentos do dia terminarem de processar, um resumo em linguagem natural dos eventos ocorridos, usando um modelo de linguagem local. | Média      |
 | RF09 | O sistema deve permitir configurar parâmetros por câmera/área (ex.: tempo máximo de portão aberto, áreas restritas).                                                       | Média      |

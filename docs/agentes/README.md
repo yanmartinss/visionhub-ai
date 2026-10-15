@@ -178,7 +178,7 @@ type EventListItem = {
 
 ### Backend
 
-- [ ] **D** — endpoints de dashboard e histórico (US05, US06) e detalhe do evento (US33).
+- [x] **D** — endpoints de dashboard e histórico (US05, US06) e detalhe do evento (US33).
 - [ ] **E** — FFmpeg: corte do clipe (10 s antes/depois) comprimido + thumbnail; MinIO no
       compose e cliente S3 (`clipPath`/`thumbnailPath` = object key); apagar o original após a
       finalização; retenção dos clipes após X dias; log de acesso aos clipes (LGPD) (US20–US23).

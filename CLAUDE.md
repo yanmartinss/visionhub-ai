@@ -294,6 +294,27 @@ O passo "processar" (`services/segment-processor.ts`) deixou de ser stub: roda e
   qualquer detecção `object`) — tracking de verdade é da Fatia G. `EventType.other` nunca é
   gerado automaticamente (sem `detectionLabel`).
 
+### Dashboard e histórico (Fatia D, backend)
+
+Endpoints só de leitura, `requireAuth` (qualquer papel); formato completo (incluindo o
+`EventListItem` comum aos três) em `docs/agentes/README.md` §3.3:
+
+- `GET /api/events?from&to&type&cameraId&status&page&pageSize` — histórico paginado
+  (`services/event.service.ts#listEvents`; `pageSize` 1–100, default 20), ordenado por `startedAt`
+  decrescente → `{ items, total, page, pageSize }`.
+- `GET /api/events/:id` — detalhe "por que este evento" (US33, `getEventDetail`):
+  `detectionLabel`/`containment` de `EVENT_TYPE_REQUIREMENTS`, a `Rule` **atual** da câmera para o
+  tipo, as `Area`s do tipo (todas: qual área disparou não é gravado), segmento e `offsetSec`.
+- `GET /api/dashboard?date` — `services/dashboard.service.ts`: contadores do dia por tipo/status,
+  `previousDayEvents`, `openEvents` (`pending`+`inProgress` de todos os dias), câmeras, lotes do dia
+  com `progress` (reaproveita `listRecordingDays`) e os 10 últimos eventos. Sem `date` = hoje em
+  `America/Sao_Paulo`.
+- **Datas = data do lote** (`segment.recordingDay.date`), não o horário do evento: sem fuso, mesma
+  "data" da tela de gravações; evento sem segmento sai de qualquer filtro por data.
+- `eventSelect` (formato cru de `PATCH /events/:id` e `GET /recording-days/:id/events`),
+  `eventListSelect` e `toEventListItem` ficam em `event.service.ts`; os caminhos de thumbnail/clipe
+  nunca saem da API (só `hasThumbnail`/`hasClip`).
+
 Variáveis de ambiente novas (`backend/.env`, não versionado):
 
 - `STORAGE_DIR` — raiz de `uploads/` e `tmp/` (default `storage`, relativo ao `backend/`).
@@ -391,7 +412,8 @@ tabelas e campos), `requisitos.md` (upload/link, lote do dia, retenção, LGPD) 
     (`pending`/`inProgress`/`resolved`), ffprobe (`ffmpeg-static`/`ffprobe-static`), sugestão
     de horário do segmento pelo nome do arquivo e avisos de lacuna/sobreposição na cobertura
     do dia — _feita_.
-  - **D** — dashboard e histórico (wireframes em `docs/wireframes/`).
+  - **D** — dashboard e histórico (wireframes em `docs/wireframes/`) — backend _feito_
+    (`GET /dashboard`, `GET /events`, `GET /events/:id`); front pendente.
   - **E** — clipes/thumbnails (FFmpeg), MinIO, retenção e log de acesso (LGPD).
   - **F** — resumo do dia com Ollama.
   - **G** (última) — serviço Python de visão implementando o contrato `Detector`.

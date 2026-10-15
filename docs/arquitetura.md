@@ -89,6 +89,16 @@ Endpoints de lote/segmento (prefixo `/api`; escrita só para gestores, leitura p
 | `POST /segments/:id/reprocess`                    | reprocessa um segmento `failed` ou `completed` (redetecta sem reenviar o arquivo)            |
 | `PATCH /events/:id`                               | muda o status de um evento (`pending`/`inProgress`/`resolved`; qualquer usuário autenticado) |
 
+Endpoints de dashboard e histórico (somente leitura, qualquer usuário autenticado; formato completo em
+`docs/agentes/README.md` §3.3). As datas são a **data do lote** (`RecordingDay.date`), não o horário do evento:
+sem conversão de fuso e coerente com a tela de gravações.
+
+| Rota                     | Função                                                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /dashboard?date`    | painel do dia (padrão: hoje em `America/Sao_Paulo`): contadores por tipo/status, total do dia anterior, eventos em aberto, câmeras, lotes e últimos eventos |
+| `GET /events`            | histórico paginado; filtros `from`/`to` (data do lote), `type`, `cameraId`, `status`; `page`/`pageSize`                                                 |
+| `GET /events/:id`        | detalhe "por que este evento": rótulo do detector, contenção, regra e áreas atuais do tipo, duração, confiança, segmento e posição no vídeo             |
+
 ### 4. Fila (BullMQ + Redis)
 
 - 1 job por segmento (`jobId = segmentId`, então enfileirar duas vezes é no-op); retentativa com backoff exponencial; `attempts` e `error` persistidos no segmento.
@@ -125,7 +135,7 @@ Endpoints de lote/segmento (prefixo `/api`; escrita só para gestores, leitura p
 
 - Envio de gravação (upload/link, câmera, data, horário inicial).
 - Lista de lotes do dia com status e progresso por segmento (via polling; Socket.IO opcional só para progresso).
-- Timeline de eventos do dia com thumbnail/clipe; histórico com filtros (data, tipo, câmera/área).
+- Timeline de eventos do dia com thumbnail/clipe; histórico com filtros (data, tipo, câmera, status).
 - Resumo do dia gerado por IA.
 - Configuração de regras (tempo máximo de portão aberto, áreas restritas etc.).
 
