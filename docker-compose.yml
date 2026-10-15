@@ -81,6 +81,25 @@ services:
     #           count: all
     #           capabilities: [gpu]
 
+  # Serviço de visão (Fatia G): FastAPI + YOLO. Lê os vídeos de STORAGE_DIR (mesmo diretório do
+  # backend, montado só para leitura). Backend: DETECTOR=python, VISION_URL=http://localhost:8000.
+  vision:
+    build: ./vision
+    container_name: visionhub_vision
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      STORAGE_DIR: /storage
+      YOLO_MODEL: ${YOLO_MODEL:-yolov8n.pt}
+    volumes:
+      - ${VISION_STORAGE_DIR:-./backend/storage}:/storage:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
 volumes:
   pgdata:
   redisdata:

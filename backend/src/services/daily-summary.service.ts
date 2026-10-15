@@ -22,6 +22,7 @@ const STATUS_LABELS: Record<EventStatus, string> = {
   pending: "ainda pendente",
   inProgress: "em atendimento",
   resolved: "já resolvido",
+  falsePositive: "descartado como falso positivo",
 };
 
 // Busy days are summarized by type counts; only this many events are listed
@@ -39,7 +40,7 @@ const SYSTEM_PROMPT = [
   "- Comece com uma frase geral sobre o dia; depois fale de cada tipo de evento, citando os horários.",
   "- O status de cada ocorrência (ainda pendente, em atendimento, já resolvido) está na mesma linha dela; nunca atribua o status de uma ocorrência a outra.",
   "- Não feche com uma lista de pendências: ela é anexada automaticamente depois do seu texto.",
-  "- Refira-se ao dia como \"neste dia\" (o resumo é lido depois), nunca \"hoje\".",
+  '- Refira-se ao dia como "neste dia" (o resumo é lido depois), nunca "hoje".',
   "- Use os horários exatamente como aparecem nos fatos (ex.: 08h15).",
   "- Tom objetivo e cordial, de 1 a 3 parágrafos curtos, sem títulos, listas, markdown ou emojis.",
   "- Só mencione confiança quando os fatos indicarem baixa confiança.",
@@ -188,7 +189,10 @@ export const buildFacts = (day: LoadedDay, events: LoadedEvent[]): string => {
   let listed = 0;
   for (const [type, list] of byType) {
     const counts = (Object.keys(STATUS_LABELS) as EventStatus[])
-      .map((status) => [status, list.filter((e) => e.status === status).length] as const)
+      .map(
+        (status) =>
+          [status, list.filter((e) => e.status === status).length] as const,
+      )
       .filter(([, count]) => count > 0)
       .map(([status, count]) => `${count} ${STATUS_LABELS[status]}`);
     lines.push("");

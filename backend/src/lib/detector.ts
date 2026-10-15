@@ -14,13 +14,18 @@ export type DetectorInput = { segmentId: string; filePath: string };
 export type Detector = (input: DetectorInput) => Promise<Detection[]>;
 
 // Dispatches to the configured detector implementation. `simulated` (default)
-// reads a JSON fixture per segment; `python` is the Fatia G plug point.
+// reads a JSON fixture per segment; `python` calls the vision service (`VISION_URL`).
 export const runDetector: Detector = async (input) => {
   const mode = process.env.DETECTOR || "simulated";
   if (mode === "simulated") {
     const { runSimulatedDetector } =
       await import("../services/simulated-detector.service.ts");
     return runSimulatedDetector(input);
+  }
+  if (mode === "python") {
+    const { runPythonDetector } =
+      await import("../services/python-detector.service.ts");
+    return runPythonDetector(input);
   }
   throw new Error(`Detector "${mode}" is not implemented yet`);
 };
