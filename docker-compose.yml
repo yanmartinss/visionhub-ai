@@ -37,6 +37,31 @@ services:
       timeout: 3s
       retries: 5
 
+  # LLM local do resumo do dia (Fatia F). Baixar o modelo uma vez:
+  #   docker compose exec ollama ollama pull qwen2.5:3b
+  ollama:
+    image: ollama/ollama:latest
+    container_name: visionhub_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollamadata:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # GPU NVIDIA (opcional; exige NVIDIA Container Toolkit / Docker Desktop com GPU):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
 volumes:
   pgdata:
   redisdata:
+  ollamadata:
