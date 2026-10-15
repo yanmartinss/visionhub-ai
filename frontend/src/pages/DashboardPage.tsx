@@ -9,7 +9,6 @@ import {
   Clock,
   DoorOpen,
   PawPrint,
-  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -33,6 +32,7 @@ import type {
   EventType,
 } from "../lib/types";
 import { usePolling } from "../hooks/usePolling";
+import DaySummaryCard, { DaySummaryHeading } from "../components/DaySummaryCard";
 import {
   DayStatusBadge,
   EventStatusBadge,
@@ -244,6 +244,10 @@ function DashboardPage() {
     : null;
   const inactiveCameras =
     data?.cameras.items.filter((camera) => !camera.active) ?? [];
+  const summaryDays =
+    data?.recordingDays.filter(
+      (day) => day.status === "completed" || day.status === "partial",
+    ) ?? [];
   const typeCounts = data
     ? EVENT_TYPES.filter((type) => data.totals.byType[type] > 0)
     : [];
@@ -406,15 +410,25 @@ function DashboardPage() {
 
             <div className="space-y-6">
               <section className={CARD}>
-                <h2 className="flex items-center gap-2 font-serif text-lg font-bold text-slate-900">
-                  <Sparkles className="h-4 w-4 text-slate-500" />
-                  Resumo do dia — IA
-                </h2>
-                <p className="mt-2 text-sm text-slate-500">
-                  O resumo em linguagem natural será gerado localmente quando
-                  todas as gravações do dia forem processadas. Disponível em
-                  breve.
-                </p>
+                <DaySummaryHeading />
+                {summaryDays.length === 0 ? (
+                  <p className="mt-2 text-sm text-slate-500">
+                    O resumo em linguagem natural é gerado localmente quando as
+                    gravações do dia terminam de processar.
+                  </p>
+                ) : (
+                  <div className="mt-3 space-y-4">
+                    {summaryDays.map((day) => (
+                      <DaySummaryCard
+                        key={day.id}
+                        recordingDayId={day.id}
+                        label={
+                          summaryDays.length > 1 ? day.cameraName : undefined
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
 
               {typeCounts.length > 0 && (
