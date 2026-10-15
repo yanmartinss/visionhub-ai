@@ -61,6 +61,9 @@ function RecordingDetail({ id }: { id: string }) {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
+  // Upload segments whose original was removed (retention): the API tells us
+  // only when reprocess is attempted (409), so the id is remembered here.
+  const [needsResend, setNeedsResend] = useState<Set<string>>(new Set());
 
   const showDay = useCallback((data: [RecordingDayDetail, DetectedEvent[]]) => {
     setDay(data[0]);
@@ -117,7 +120,11 @@ function RecordingDetail({ id }: { id: string }) {
       await apiFetch(`/segments/${segmentId}/reprocess`, { method: "POST" });
       await refresh();
     } catch (err) {
-      setError(describeError(err, "Erro ao reprocessar o segmento."));
+      if (err instanceof ApiError && err.status === 409) {
+        setNeedsResend((prev) => new Set(prev).add(segmentId));
+      } else {
+        setError(describeError(err, "Erro ao reprocessar o segmento."));
+      }
     } finally {
       setBusyId(null);
     }
@@ -160,6 +167,14 @@ function RecordingDetail({ id }: { id: string }) {
     // area on the camera, so detection runs again with it.
     if (segment.status !== "failed" && segment.status !== "completed")
       return null;
+    if (needsResend.has(segment.id)) {
+      return (
+        <span className="block max-w-xs text-xs text-amber-800">
+          O arquivo original foi removido após o processamento. Para
+          reprocessar, envie novamente o mesmo arquivo no formulário abaixo.
+        </span>
+      );
+    }
     return (
       <button
         disabled={busyId === segment.id}
@@ -328,15 +343,6 @@ function RecordingDetail({ id }: { id: string }) {
             </tbody>
           </table>
         </div>
-      )}
-
-      {(day.status === "completed" || day.status === "partial") && (
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-4">
-          <DaySummaryHeading />
-          <div className="mt-2">
-            <DaySummaryCard key={day.status} recordingDayId={day.id} />
-          </div>
-        </section>
       )}
 
       <h2 className="mt-8 font-serif text-lg font-bold text-slate-900">

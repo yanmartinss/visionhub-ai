@@ -18,6 +18,8 @@ const API_MESSAGES: Record<string, string> = {
   "Segment not found": "Segmento não encontrado.",
   "Only failed or completed segments can be reprocessed":
     "Só segmentos com falha ou já concluídos podem ser reprocessados.",
+  "Original file was removed after processing; send it again to reprocess":
+    "O arquivo original já foi removido após o processamento. Para reprocessar, envie novamente o mesmo arquivo.",
   "Camera not found": "Câmera não encontrada.",
   "Camera is inactive": "Esta câmera está inativa.",
   "Invalid recording day data": "Escolha uma câmera e uma data válidas.",
