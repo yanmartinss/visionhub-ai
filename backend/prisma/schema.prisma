@@ -52,21 +52,6 @@ model Request {
   updatedAt   DateTime      @default(now()) @updatedAt
 }
 
-model Camera {
-  id                 String   @id @default(uuid())
-  name               String
-  location           String
-  active             Boolean  @default(true)
-  referenceImagePath String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @default(now()) @updatedAt
-
-  areas         Area[]
-  rules         Rule[]
-  events        Event[]
-  recordingDays RecordingDay[]
-}
-
 enum AreaType {
   restricted
   sensitive
@@ -101,6 +86,21 @@ enum EventStatus {
   pending
   inProgress
   resolved
+}
+
+model Camera {
+  id                 String   @id @default(uuid())
+  name               String
+  location           String
+  active             Boolean  @default(true)
+  referenceImagePath String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+
+  areas         Area[]
+  rules         Rule[]
+  events        Event[]
+  recordingDays RecordingDay[]
 }
 
 model Rule {

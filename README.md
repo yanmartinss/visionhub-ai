@@ -58,6 +58,7 @@ docker compose up --build
 - [Backlog](docs/backlog.md)
 - [Database model](docs/database.md)
 - [Wireframes](docs/wireframes/)
+- [Divisão de agentes](docs/agentes/README.md) (backend, frontend e IA local)
 
 ## Autores
 

@@ -399,6 +399,9 @@ tabelas e campos), `requisitos.md` (upload/link, lote do dia, retenção, LGPD) 
   implementará (trocar = variável de ambiente). A fusão de eventos entre segmentos é feita numa
   etapa de finalização do lote (independe da ordem de upload); os originais só são apagados
   depois dela.
+- **Divisão de agentes:** o que falta está repartido entre backend, frontend e IA local
+  (Ollama + Python) em `docs/agentes/README.md` (propriedade de arquivos, contratos, pedidos
+  entre agentes); subagentes em `.claude/agents/`.
 - Não implementar RTSP/tempo real agora.
 - Rate limit global da API: 1500 req/15 min por IP (o polling do front consome uma parte).
 
