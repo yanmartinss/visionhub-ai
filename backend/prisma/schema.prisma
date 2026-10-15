@@ -87,6 +87,7 @@ enum EventStatus {
   pending
   inProgress
   resolved
+  falsePositive
 }
 
 model Camera {

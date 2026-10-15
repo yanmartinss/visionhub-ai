@@ -10,6 +10,7 @@ import * as recordingDayController from "../controllers/recording-day.controller
 import * as segmentController from "../controllers/segment.controller.ts";
 import * as eventController from "../controllers/event.controller.ts";
 import * as dashboardController from "../controllers/dashboard.controller.ts";
+import * as statsController from "../controllers/stats.controller.ts";
 import { requireAuth } from "../middleware/require-auth.ts";
 import { requireAdmin } from "../middleware/require-admin.ts";
 import { authLimiter, requestLimiter } from "../middleware/rate-limit.ts";
@@ -251,3 +252,12 @@ routes.patch("/events/:id", requireAuth, eventController.updateEventStatus);
 // DASHBOARD ROUTES
 // Read-only daily overview for every role (US05), like the recordings reads.
 routes.get("/dashboard", requireAuth, dashboardController.getDashboard);
+
+// STATS ROUTES
+// Administrator-only (US34): precision of the detection, from the triage.
+routes.get(
+  "/stats/accuracy",
+  requireAuth,
+  requireAdmin,
+  statsController.getAccuracy,
+);

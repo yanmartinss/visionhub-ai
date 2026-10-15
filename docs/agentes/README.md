@@ -191,6 +191,26 @@ type EventListItem = {
   false` por alguns instantes; o polling da tela pega).
 - `400` `"Invalid event id"`.
 
+#### US34 — precisão por tipo (status `falsePositive`)
+
+- `EventStatus` ganha `falsePositive` (triagem: "o sistema errou"). `PATCH /api/events/:id`,
+  `GET /api/events?status=` e `byStatus` do dashboard (`{ pending, inProgress, resolved,
+  falsePositive }`; `totals.events` soma os quatro) passam a aceitá-lo/devolvê-lo.
+  `openEvents` continua só `pending` + `inProgress`.
+- **`GET /api/stats/accuracy`** — `requireAuth` + `requireAdmin` (403 para os demais).
+  Query opcional: `from`, `to` (`YYYY-MM-DD`, data do lote), `cameraId`. `400` `"Invalid filters"`.
+  ```ts
+  type AccuracyCounts = {
+    total: number;
+    resolved: number; // confirmados na triagem
+    falsePositive: number;
+    unreviewed: number; // pending + inProgress, fora do cálculo
+    precision: number | null; // resolved / (resolved + falsePositive); null = nada triado ainda
+  };
+  // 200
+  { overall: AccuracyCounts; items: (AccuracyCounts & { type: EventType })[] } // um item por tipo
+  ```
+
 ## 4. O que falta, por agente
 
 ### Backend
@@ -202,7 +222,7 @@ type EventListItem = {
       `MediaAccessLog`, só `GET /events/:id/clip`) (US20–US23).
 - [x] Disparar `generateDailySummary` ao concluir o lote, `completed` ou `partial` (gancho da
       Fatia F, contrato 3.2).
-- [ ] US34 — métricas de precisão (eventos marcados como falso positivo, por tipo).
+- [x] US34 — métricas de precisão por tipo: status `falsePositive` + `GET /api/stats/accuracy` (admin). Falta só a migration `20261015100000_event_false_positive_status` ser aplicada pelo usuário.
 - [ ] US37 — e-mail do resumo e de alertas graves via `lib/mailer.ts`.
 - [ ] Manter `docs/arquitetura.md`, `docs/database.md`, `docs/requisitos.md` coerentes.
 
@@ -251,6 +271,8 @@ Modelo — adicione uma linha por pedido e marque quando atendido:
 | IA → back | Gancho: chamar `generateDailySummary(recordingDayId)` sem `await` (`.catch` + log) depois de `finalizeRecordingDay` em `completed` **e** `partial` (contrato 3.2) | atendido |
 | IA → back | Rota `GET /api/recording-days/:id/summary` → `{ generatedText, createdAt }` ou 404 (`requireAuth`) | atendido |
 | back → front | `POST /api/segments/:id/reprocess` passa a responder `409` `"Original file was removed after processing; send it again to reprocess"` em segmento **de upload** `completed`/`failed` cujo original já foi apagado (Fatia E, retenção). Esconder/explicar o botão "Reprocessar" nesses casos; para reprocessar, reenviar o **mesmo** arquivo (`POST .../segments/upload`, devolve `202` e reaproveita o segmento). Segmentos de **link** continuam reprocessáveis (o worker baixa de novo). | aberto |
+| back → front | Novo status `falsePositive` em `EventStatus` (PATCH/lista/`byStatus`) e `GET /api/stats/accuracy` (admin, formato na seção 3.3). Adicionar a opção "Falso positivo" no `<select>` de triagem, `EventStatusBadge`, filtro do histórico, tipo `byStatus` do dashboard, mensagens, e a tela de precisão (US34). | aberto |
+| back → IA | `daily-summary.service.ts`: `STATUS_LABELS: Record<EventStatus, string>` não compila com o novo `falsePositive` (`tsc` falha). Adicionar o rótulo e tratar `falsePositive` como **não pendente** em `describePending` (hoje só `resolved` sai da lista de pendências) — ideal: não citar falso positivo como ocorrência no resumo. | aberto |
 
 ## 7. Fora de escopo
 

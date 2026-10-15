@@ -10,7 +10,7 @@ export const listEventsSchema = z
     to: recordingDateSchema.optional(),
     type: z.enum(EVENT_TYPES).optional(),
     cameraId: z.uuid().optional(),
-    status: z.enum(["pending", "inProgress", "resolved"]).optional(),
+    status: z.enum(["pending", "inProgress", "resolved", "falsePositive"]).optional(),
     page: z.coerce.number().int().min(1).default(1),
     pageSize: z.coerce.number().int().min(1).max(100).default(20),
   })

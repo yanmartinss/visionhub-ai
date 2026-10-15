@@ -76,13 +76,14 @@ export const getDashboard = async (requestedDate?: Date) => {
     pending: 0,
     inProgress: 0,
     resolved: 0,
+    falsePositive: 0,
   };
   for (const row of byStatusRows) byStatus[row.status] = row._count._all;
 
   return {
     date,
     totals: {
-      events: byStatus.pending + byStatus.inProgress + byStatus.resolved,
+      events: Object.values(byStatus).reduce((sum, n) => sum + n, 0),
       previousDayEvents,
       byType,
       byStatus,
