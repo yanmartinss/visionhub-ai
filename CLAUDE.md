@@ -91,10 +91,10 @@ processamento.
 
 ## Componentes ainda não implementados
 
-FFmpeg (corte/compressão de clipe — hoje só o `ffprobe` para metadados), MinIO, Ollama e o
+FFmpeg (corte/compressão de clipe — hoje só o `ffprobe` para metadados), MinIO e o
 serviço Python de visão (**por último**; o detector simulado da Fatia C faz as vezes dele até
-lá). O `docker-compose.yml` define o PostgreSQL e o Redis (API e worker rodam no host; MinIO e
-Ollama entram nas fatias correspondentes). Socket.IO deixou de ser essencial: o front usa
+lá). O `docker-compose.yml` define o PostgreSQL, o Redis e o Ollama (API e worker rodam no
+host; MinIO entra na fatia correspondente). Socket.IO deixou de ser essencial: o front usa
 **polling** (`hooks/usePolling.ts`).
 
 Decisões tomadas (antes em aberto):
@@ -315,6 +315,23 @@ Endpoints só de leitura, `requireAuth` (qualquer papel); formato completo (incl
   `eventListSelect` e `toEventListItem` ficam em `event.service.ts`; os caminhos de thumbnail/clipe
   nunca saem da API (só `hasThumbnail`/`hasClip`).
 
+### Resumo do dia com Ollama (Fatia F — agente IA local)
+
+- Ollama roda no compose (`docker compose up -d ollama`; modelo baixado uma vez com
+  `docker compose exec ollama ollama pull qwen2.5:3b`, volume `ollamadata`). Em CPU, a primeira
+  chamada (carga do modelo) leva minutos; com o modelo carregado, ~10–15 s por resumo.
+- `lib/ollama.ts`: `chat()` (`/api/chat`, sem streaming, timeout, `OllamaError`) e `pingOllama()`.
+- `services/daily-summary.service.ts#generateDailySummary(recordingDayId)` (contrato 3.2 em
+  `docs/agentes/README.md`): só age em lote `completed`/`partial`; monta os **fatos** no código
+  (período analisado, ocorrências agrupadas por tipo com horário/duração/status no fuso
+  `SUMMARY_TIMEZONE`; sem dados pessoais) e o modelo só redige. Pendências e aviso de cobertura
+  incompleta (segmentos `failed`, lacunas) são anexados pelo código, não pelo modelo (o 3B errava
+  essas partes). Dia sem eventos → texto fixo, sem chamar o Ollama. Upsert em `DailySummary`;
+  se o lote foi refinalizado durante a geração, descarta o texto velho. **Nunca rejeita**: falha
+  só vai para o log. Mudança de status de evento (triagem) não refaz o resumo.
+- Pendente no backend (seção 6 do README de agentes): disparo sem `await` após a finalização e
+  `GET /api/recording-days/:id/summary`.
+
 Variáveis de ambiente novas (`backend/.env`, não versionado):
 
 - `STORAGE_DIR` — raiz de `uploads/` e `tmp/` (default `storage`, relativo ao `backend/`).
@@ -335,6 +352,9 @@ Variáveis de ambiente novas (`backend/.env`, não versionado):
   `SEGMENT_RETRY_BACKOFF_MS` (30000) — estes dois são lidos por **quem enfileira** (API e
   worker devem usar o mesmo `.env`) —, `RECOVERY_INTERVAL_MS` (5 min), `STALE_PROCESSING_MS`
   (30 min), `DOWNLOAD_CONNECT_TIMEOUT_MS` (15 s) e `DOWNLOAD_IDLE_TIMEOUT_MS` (60 s).
+- Resumo do dia (Fatia F), todos opcionais: `OLLAMA_URL` (`http://localhost:11434`),
+  `OLLAMA_MODEL` (`qwen2.5:3b`), `OLLAMA_TIMEOUT_MS` (5 min), `OLLAMA_KEEP_ALIVE` (`30m`) e
+  `SUMMARY_TIMEZONE` (`America/Sao_Paulo`).
 
 Comandos (rodar dentro de `backend/`):
 

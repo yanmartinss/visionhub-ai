@@ -70,8 +70,11 @@ type Detector = (input: { segmentId: string; filePath: string }) => Promise<Dete
   `services/daily-summary.service.ts`: lê os eventos do lote, chama o Ollama e faz upsert em
   `DailySummary` (`recordingDayId` único).
 - Disparo: o backend chama depois de `finalizeRecordingDay` quando o lote fica `completed`
-  (sem bloquear e sem derrubar o lote se o Ollama estiver fora — só log).
-- Env: `OLLAMA_URL` (default `http://localhost:11434`), `OLLAMA_MODEL`.
+  **ou `partial`** (sem `await`, sem bloquear e sem derrubar o lote se o Ollama estiver fora —
+  só log). Em `partial`, o resumo avisa que houve segmentos com falha (cobertura incompleta).
+  Pode ser chamado de novo a cada refinalização (reprocessamento, mudança de regra): é upsert.
+- Env: `OLLAMA_URL` (default `http://localhost:11434`), `OLLAMA_MODEL` (default `qwen2.5:3b`,
+  serviço `ollama` no compose).
 - Leitura pelo front: `GET /api/recording-days/:id/summary` → `{ generatedText, createdAt }` ou 404.
 
 ### 3.3 API para o frontend (backend → frontend)
@@ -182,7 +185,8 @@ type EventListItem = {
 - [ ] **E** — FFmpeg: corte do clipe (10 s antes/depois) comprimido + thumbnail; MinIO no
       compose e cliente S3 (`clipPath`/`thumbnailPath` = object key); apagar o original após a
       finalização; retenção dos clipes após X dias; log de acesso aos clipes (LGPD) (US20–US23).
-- [ ] Disparar `generateDailySummary` ao concluir o lote (gancho da Fatia F).
+- [ ] Disparar `generateDailySummary` ao concluir o lote, `completed` ou `partial` (gancho da
+      Fatia F, contrato 3.2).
 - [ ] US34 — métricas de precisão (eventos marcados como falso positivo, por tipo).
 - [ ] US37 — e-mail do resumo e de alertas graves via `lib/mailer.ts`.
 - [ ] Manter `docs/arquitetura.md`, `docs/database.md`, `docs/requisitos.md` coerentes.
@@ -198,8 +202,9 @@ type EventListItem = {
 
 ### IA local
 
-- [ ] **F** — serviço `ollama` no compose, `lib/ollama.ts`, prompt em pt-BR a partir dos eventos
+- [x] **F** — serviço `ollama` no compose, `lib/ollama.ts`, prompt em pt-BR a partir dos eventos
       do dia (tipos, horários, status), `daily-summary.service.ts` gravando `DailySummary` (US08).
+      Falta só o lado do backend (gancho + rota, seção 6) para o resumo aparecer de ponta a ponta.
 - [ ] **G** — serviço `vision/` (FastAPI + Ultralytics YOLO + OpenCV + FFmpeg, Dockerfile
       próprio): amostrar ~1 frame a cada 1–2 s em streaming (nunca carregar o vídeo inteiro),
       rodar YOLO, mapear classes → labels do contrato (3.1), devolver `Detection[]`.
@@ -227,6 +232,8 @@ Modelo — adicione uma linha por pedido e marque quando atendido:
 | De → Para          | Pedido                                   | Status   |
 | ------------------ | ---------------------------------------- | -------- |
 | _ex.: front → back_ | _campo `cameraName` em `GET /api/events`_ | _aberto_ |
+| IA → back | Gancho: chamar `generateDailySummary(recordingDayId)` sem `await` (`.catch` + log) depois de `finalizeRecordingDay` em `completed` **e** `partial` (contrato 3.2) | aberto |
+| IA → back | Rota `GET /api/recording-days/:id/summary` → `{ generatedText, createdAt }` ou 404 (`requireAuth`) | aberto |
 
 ## 7. Fora de escopo
 
