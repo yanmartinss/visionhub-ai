@@ -54,3 +54,27 @@ def test_detect_video_maps_filters_and_clamps(tmp_path):
     assert out[0]["box"]["width"] == pytest.approx(0.4)
     assert out[1]["box"] == {"x": 0.0, "y": 0.5, "width": 0.4, "height": 0.5}
     assert out[2]["timeSec"] == pytest.approx(1.0)
+
+
+def _moving_person(height: float, step: float):
+    calls = {"n": 0}
+
+    def predict(_frame):
+        x = 0.05 + step * calls["n"]
+        calls["n"] += 1
+        return [RawBox("person", 0.9, x, 0.5, x + height / 2, 0.5 + height)]
+
+    return predict
+
+
+def test_child_running_small_and_fast(tmp_path):
+    video = make_video(tmp_path / "v.mp4", seconds=3)
+    out = detect_video(video, _moving_person(0.12, 0.25), interval_sec=1.0, min_confidence=0.35)
+    assert [d["label"] for d in out].count("child_running") == 2  # amostras 2 e 3
+
+
+def test_child_running_ignores_adults_and_walkers(tmp_path):
+    video = make_video(tmp_path / "v.mp4", seconds=3)
+    adult = detect_video(video, _moving_person(0.6, 0.2), interval_sec=1.0, min_confidence=0.35)
+    walker = detect_video(video, _moving_person(0.12, 0.1), interval_sec=1.0, min_confidence=0.35)
+    assert "child_running" not in [d["label"] for d in adult + walker]

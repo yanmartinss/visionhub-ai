@@ -7,6 +7,7 @@ import numpy as np
 from . import config
 from .classes import label_for_class
 from .sampling import sample_frames
+from .tracking import SpeedEstimator
 
 
 @dataclass(frozen=True)
@@ -37,7 +38,9 @@ def detect_video(
 ) -> list[dict]:
     """Amostra o vídeo, roda o modelo e devolve `Detection[]` do contrato 3.1."""
     detections: list[dict] = []
+    speeds = SpeedEstimator(config.TRACK_MAX_DISTANCE)
     for time_sec, frame in sample_frames(path, interval_sec):
+        frame_items: list[dict] = []
         for raw in predict(frame):
             label = label_for_class(raw.class_name)
             if label is None or raw.confidence < min_confidence:
@@ -45,7 +48,7 @@ def detect_video(
             x1, y1, x2, y2 = _clamp(raw.x1), _clamp(raw.y1), _clamp(raw.x2), _clamp(raw.y2)
             if x2 <= x1 or y2 <= y1:
                 continue
-            detections.append(
+            frame_items.append(
                 {
                     "label": label,
                     "box": {"x": x1, "y": y1, "width": x2 - x1, "height": y2 - y1},
@@ -53,7 +56,31 @@ def detect_video(
                     "timeSec": time_sec,
                 }
             )
+        detections.extend(frame_items)
+        detections.extend(_child_running(time_sec, frame_items, speeds))
     return detections
+
+
+def _child_running(time_sec: float, items: list[dict], speeds: SpeedEstimator) -> list[dict]:
+    """Deriva `child_running`: `person` de caixa pequena que se move rápido entre amostras."""
+    people = [item for item in items if item["label"] == "person"]
+    people_geometry = [
+        (
+            p["box"]["x"] + p["box"]["width"] / 2,
+            p["box"]["y"] + p["box"]["height"] / 2,
+            p["box"]["height"],
+        )
+        for p in people
+    ]
+    derived: list[dict] = []
+    for person, speed in zip(people, speeds.update(time_sec, people_geometry), strict=True):
+        if (
+            speed is not None
+            and speed >= config.RUN_SPEED_BODIES_PER_SEC
+            and person["box"]["height"] <= config.CHILD_MAX_BOX_HEIGHT
+        ):
+            derived.append({**person, "label": "child_running"})
+    return derived
 
 
 _model = None

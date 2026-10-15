@@ -18,3 +18,13 @@ SAMPLE_INTERVAL_SEC = _float("SAMPLE_INTERVAL_SEC", 1.5)
 
 # Confiança mínima das detecções do YOLO.
 MIN_CONFIDENCE = _float("MIN_CONFIDENCE", 0.35)
+
+# Heurística de `child_running` (não existe classe COCO): pessoa de caixa pequena que se move
+# rápido entre amostras. Altura normalizada máxima da caixa para contar como "criança".
+CHILD_MAX_BOX_HEIGHT = _float("CHILD_MAX_BOX_HEIGHT", 0.35)
+
+# Velocidade mínima do centro, em alturas-de-corpo por segundo (caminhar ~1, correr ~2,5).
+RUN_SPEED_BODIES_PER_SEC = _float("RUN_SPEED_BODIES_PER_SEC", 1.8)
+
+# Deslocamento máximo (normalizado) do centro entre amostras para considerar a mesma pessoa.
+TRACK_MAX_DISTANCE = _float("TRACK_MAX_DISTANCE", 0.3)
