@@ -170,10 +170,8 @@ vitest + Testing Library (`npm test` em `frontend/`, setup em `src/test/setup.ts
 
 Resumo do dia (Fatia F, front): `components/DaySummaryCard.tsx` mostra o texto de `GET
 /recording-days/:id/summary` (`lib/summary-api.ts`; 404 = ainda não gerado, não é erro) no
-dashboard (um card por lote `completed`/`partial`) e no detalhe do lote. **Enquanto o backend não
-criar a rota**, `VITE_MOCK_SUMMARY=true` (`.env.local`) serve um texto fixo; remover a flag e o
-ramo de mock quando o endpoint existir. O dashboard busca o resumo uma vez por lote (não refaz
-sozinho).
+dashboard (um card por lote `completed`/`partial`) e no detalhe do lote. O dashboard busca o
+resumo uma vez por lote (não refaz sozinho).
 
 Ainda não há clipes/thumbnails visíveis (Fatia E), "por que este evento" (US33) nem tela de
 precisão (US34) no front.
