@@ -55,12 +55,42 @@ export const attachUploadedSegment = async (
   const fileName = `${segmentId}${upload.extension}`;
   const finalPath = path.join(uploadsDir(), fileName);
   let moved = false;
+  let restoredTo: string | null = null;
 
   try {
     await assertRecordingDayExists(recordingDayId);
 
     const existing = await findByHash();
     if (existing) {
+      // The original was removed after processing (retention): the same file
+      // sent again is how the operator restores it to reprocess the segment.
+      const stored = await prisma.segment.findUnique({
+        where: { id: existing.id },
+        select: { storagePath: true },
+      });
+      if (stored?.storagePath === null) {
+        const restoredPath = path.join(
+          uploadsDir(),
+          `${existing.id}${upload.extension}`,
+        );
+        await rename(upload.tmpPath, restoredPath);
+        moved = true;
+        restoredTo = restoredPath;
+        await prisma.segment.update({
+          where: { id: existing.id },
+          data: {
+            storagePath: path
+              .relative(storageDir(), restoredPath)
+              .split(path.sep)
+              .join("/"),
+            status: "received",
+            error: null,
+          },
+        });
+        await refreshRecordingDayStatus(recordingDayId);
+        await tryEnqueueSegment(existing.id);
+        return { segment: { ...existing, status: "received" as const }, created: true };
+      }
       await removeFile(upload.tmpPath);
       return { segment: existing, created: false };
     }
@@ -90,7 +120,7 @@ export const attachUploadedSegment = async (
     return { segment, created: true };
   } catch (err) {
     await removeFile(upload.tmpPath);
-    if (moved) await removeFile(finalPath);
+    if (moved) await removeFile(restoredTo ?? finalPath);
 
     // The same file arrived twice at once: return the segment that won.
     if (isUniqueViolation(err)) {
@@ -102,6 +132,24 @@ export const attachUploadedSegment = async (
 };
 
 export const reprocessSegment = async (segmentId: string) => {
+  // Uploads have no source to fetch again once the original was removed
+  // (retention). Links are downloaded again by the worker.
+  const current = await prisma.segment.findUnique({
+    where: { id: segmentId },
+    select: { sourceType: true, storagePath: true, status: true },
+  });
+  if (
+    current &&
+    current.sourceType === "upload" &&
+    current.storagePath === null &&
+    (current.status === "completed" || current.status === "failed")
+  ) {
+    throw new AppError(
+      409,
+      "Original file was removed after processing; send it again to reprocess",
+    );
+  }
+
   // `completed` is accepted too (not just `failed`): re-running detection is
   // how an operator picks up a newly marked area, an edited fixture (dev/demo
   // detector), or otherwise wants a fresh pass without re-uploading the file.

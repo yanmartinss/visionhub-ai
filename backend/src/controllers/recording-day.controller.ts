@@ -64,3 +64,16 @@ export const listDayEvents: RequestHandler = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getDaySummary: RequestHandler = async (req, res, next) => {
+  const params = uuidParamSchema.safeParse(req.params);
+  if (!params.success)
+    return res.status(400).json({ error: "Invalid recording day id" });
+
+  try {
+    const summary = await recordingDayService.getDaySummary(params.data.id);
+    return res.status(200).json(summary);
+  } catch (err) {
+    next(err);
+  }
+};

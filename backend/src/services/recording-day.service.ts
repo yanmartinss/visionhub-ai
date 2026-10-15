@@ -2,10 +2,12 @@ import { AppError } from "../lib/app-error.ts";
 import { computeCoverage } from "../lib/compute-coverage.ts";
 import { computeDayStatus } from "../lib/compute-day-status.ts";
 import { isUniqueViolation } from "../lib/is-unique-violation.ts";
+import { tryEnqueueMedia } from "../queue/media-queue.ts";
 import { prisma } from "../lib/prisma.ts";
 import type { ListRecordingDaysFilters } from "../schemas/list-recording-days-schema.ts";
 import type { SegmentStatus } from "../../generated/prisma/client.ts";
 import { findCameraById } from "./camera.service.ts";
+import { generateDailySummary } from "./daily-summary.service.ts";
 import { eventSelect } from "./event.service.ts";
 import { finalizeRecordingDay } from "./recording-day-finalization.service.ts";
 
@@ -156,6 +158,17 @@ export const listDayEvents = async (recordingDayId: string) => {
   });
 };
 
+export const getDaySummary = async (recordingDayId: string) => {
+  await assertRecordingDayExists(recordingDayId);
+
+  const summary = await prisma.dailySummary.findUnique({
+    where: { recordingDayId },
+    select: { generatedText: true, createdAt: true },
+  });
+  if (!summary) throw new AppError(404, "Summary not found");
+  return summary;
+};
+
 // Recomputes the day's status from its segments. The worker calls this after
 // each segment finishes; the API calls it on segment create/reprocess too
 // (harmless before anything has run — status just stays `pending`).
@@ -177,6 +190,14 @@ export const refreshRecordingDayStatus = async (recordingDayId: string) => {
 
   if (status === "completed" || status === "partial") {
     await finalizeRecordingDay(recordingDayId);
+    // Not awaited: the model can take minutes and must not hold the worker or
+    // the request. `generateDailySummary` never rejects; the catch is a guard.
+    void generateDailySummary(recordingDayId).catch((err) =>
+      console.error("[daily-summary] unexpected failure:", err),
+    );
+    // Clips/thumbnails run on their own queue (FFmpeg is heavy). Events that
+    // already have their media are skipped by the job.
+    void tryEnqueueMedia(recordingDayId);
   }
 
   return status;

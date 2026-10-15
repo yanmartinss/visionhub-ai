@@ -7,13 +7,14 @@
     "dev": "tsx watch --env-file=.env src/server.ts",
     "worker": "tsx watch --env-file=.env src/worker.ts",
     "start:worker": "tsx --env-file=.env src/worker.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "bcryptjs": "^3.0.3",
@@ -44,6 +45,7 @@
     "@types/pg": "^8.23.1",
     "prisma": "^7.10.0",
     "tsx": "^4.23.12",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.4"
   }
 }

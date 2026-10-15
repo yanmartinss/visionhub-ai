@@ -177,6 +177,20 @@ type EventListItem = {
 - `400` `"Invalid date"`. Resumo do dia fica fora: usar `GET /api/recording-days/:id/summary`
   (Fatia F).
 
+#### Fatia E — clipe e thumbnail do evento
+
+`GET /api/events/:id/clip` e `GET /api/events/:id/thumbnail` — `requireAuth` (qualquer papel).
+
+- Resposta `200`: **bytes** (`video/mp4` / `image/jpeg`), `Cache-Control: private, no-store`. Buscar
+  com `apiFetchBlob` + `URL.createObjectURL` (cookie não vai em `<video src>`/`<img src>`
+  cross-origin). Sem suporte a `Range`: o clipe tem poucos MB e é carregado inteiro como Blob.
+- `404` `"Event not found"` (evento não existe) ou `"Media not found"` (ainda não gerado, ou
+  clipe removido pela retenção). Só exibir o player quando `hasClip`/`hasThumbnail` forem `true`.
+- Clipes: H.264 sem áudio, até 480p, janela 10 s antes/depois do evento (máx. 120 s). São gerados
+  em segundo plano **depois** da finalização do lote: o evento aparece antes da mídia (`hasClip:
+  false` por alguns instantes; o polling da tela pega).
+- `400` `"Invalid event id"`.
+
 ## 4. O que falta, por agente
 
 ### Backend
@@ -185,7 +199,7 @@ type EventListItem = {
 - [ ] **E** — FFmpeg: corte do clipe (10 s antes/depois) comprimido + thumbnail; MinIO no
       compose e cliente S3 (`clipPath`/`thumbnailPath` = object key); apagar o original após a
       finalização; retenção dos clipes após X dias; log de acesso aos clipes (LGPD) (US20–US23).
-- [ ] Disparar `generateDailySummary` ao concluir o lote, `completed` ou `partial` (gancho da
+- [x] Disparar `generateDailySummary` ao concluir o lote, `completed` ou `partial` (gancho da
       Fatia F, contrato 3.2).
 - [ ] US34 — métricas de precisão (eventos marcados como falso positivo, por tipo).
 - [ ] US37 — e-mail do resumo e de alertas graves via `lib/mailer.ts`.
@@ -232,8 +246,9 @@ Modelo — adicione uma linha por pedido e marque quando atendido:
 | De → Para          | Pedido                                   | Status   |
 | ------------------ | ---------------------------------------- | -------- |
 | _ex.: front → back_ | _campo `cameraName` em `GET /api/events`_ | _aberto_ |
-| IA → back | Gancho: chamar `generateDailySummary(recordingDayId)` sem `await` (`.catch` + log) depois de `finalizeRecordingDay` em `completed` **e** `partial` (contrato 3.2) | aberto |
-| IA → back | Rota `GET /api/recording-days/:id/summary` → `{ generatedText, createdAt }` ou 404 (`requireAuth`) | aberto |
+| IA → back | Gancho: chamar `generateDailySummary(recordingDayId)` sem `await` (`.catch` + log) depois de `finalizeRecordingDay` em `completed` **e** `partial` (contrato 3.2) | atendido |
+| IA → back | Rota `GET /api/recording-days/:id/summary` → `{ generatedText, createdAt }` ou 404 (`requireAuth`) | atendido |
+| back → front | `POST /api/segments/:id/reprocess` passa a responder `409` `"Original file was removed after processing; send it again to reprocess"` em segmento **de upload** `completed`/`failed` cujo original já foi apagado (Fatia E, retenção). Esconder/explicar o botão "Reprocessar" nesses casos; para reprocessar, reenviar o **mesmo** arquivo (`POST .../segments/upload`, devolve `202` e reaproveita o segmento). Segmentos de **link** continuam reprocessáveis (o worker baixa de novo). | aberto |
 
 ## 7. Fora de escopo
 

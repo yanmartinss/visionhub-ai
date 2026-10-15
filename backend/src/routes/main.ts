@@ -209,6 +209,11 @@ routes.get(
   requireAuth,
   recordingDayController.listDayEvents,
 );
+routes.get(
+  "/recording-days/:id/summary",
+  requireAuth,
+  recordingDayController.getDaySummary,
+);
 routes.post(
   "/recording-days/:id/segments/link",
   requireAuth,
@@ -235,6 +240,12 @@ routes.post(
 // configuration — unlike rules/areas/segments above, which stay manager-only.
 routes.get("/events", requireAuth, eventController.listEvents);
 routes.get("/events/:id", requireAuth, eventController.getEvent);
+routes.get("/events/:id/clip", requireAuth, eventController.getEventClip);
+routes.get(
+  "/events/:id/thumbnail",
+  requireAuth,
+  eventController.getEventThumbnail,
+);
 routes.patch("/events/:id", requireAuth, eventController.updateEventStatus);
 
 // DASHBOARD ROUTES

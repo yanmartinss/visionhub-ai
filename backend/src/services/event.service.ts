@@ -171,3 +171,22 @@ export const updateEventStatus = async (
     select: eventSelect,
   });
 };
+
+export type EventMediaKind = "clip" | "thumbnail";
+
+// Object key of an event's clip/thumbnail. 404 both when the event does not
+// exist and when it has no media yet (not generated, expired by retention).
+export const getEventMediaKey = async (
+  eventId: string,
+  kind: EventMediaKind,
+) => {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: { clipPath: true, thumbnailPath: true },
+  });
+  if (!event) throw new AppError(404, "Event not found");
+
+  const key = kind === "clip" ? event.clipPath : event.thumbnailPath;
+  if (!key) throw new AppError(404, "Media not found");
+  return key;
+};

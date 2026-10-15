@@ -165,13 +165,19 @@ export const finalizeRecordingDay = async (recordingDayId: string) => {
           occurredAt: event.occurredAt,
         },
       },
-      select: { id: true },
+      select: { id: true, endedAt: true, segmentId: true },
     });
 
     if (existing) {
+      // A clip cut for the old bounds/segment is stale: clear it so the media
+      // job regenerates it (same object key, so it is overwritten).
+      const mediaStale =
+        existing.endedAt?.getTime() !== event.endedAt.getTime() ||
+        existing.segmentId !== event.segmentId;
       await prisma.event.update({
         where: { id: existing.id },
         data: {
+          ...(mediaStale ? { clipPath: null, thumbnailPath: null } : {}),
           endedAt: event.endedAt,
           confidence: event.maxConfidence,
           segmentId: event.segmentId,

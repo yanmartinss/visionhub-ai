@@ -6,6 +6,13 @@ import {
   SEGMENT_QUEUE_NAME,
   type SegmentJobData,
 } from "./queue/segment-queue.ts";
+import {
+  closeMediaQueue,
+  MEDIA_QUEUE_NAME,
+  type MediaJobData,
+} from "./queue/media-queue.ts";
+import { generateDayMedia } from "./services/event-media.service.ts";
+import { runRetention } from "./services/retention.service.ts";
 import { processSegmentJob } from "./services/segment-processing.service.ts";
 import { recoverSegments } from "./services/segment-recovery.service.ts";
 
@@ -18,6 +25,24 @@ const worker = new Worker<SegmentJobData>(
   SEGMENT_QUEUE_NAME,
   processSegmentJob,
   { connection, concurrency },
+);
+
+// FFmpeg cuts are CPU heavy: separate queue, one day at a time.
+const mediaWorker = new Worker<MediaJobData>(
+  MEDIA_QUEUE_NAME,
+  async (job) => {
+    const result = await generateDayMedia(job.data.recordingDayId);
+    console.log(
+      `[worker] Media for day ${job.data.recordingDayId}: ${result.generated} event(s), ${result.skipped} skipped, ${result.purged} original(s) removed`,
+    );
+  },
+  { connection, concurrency: 1 },
+);
+mediaWorker.on("error", (err) =>
+  console.error("[media-worker] error:", err.message),
+);
+mediaWorker.on("failed", (job, err) =>
+  console.error(`[media-worker] day ${job?.data.recordingDayId}:`, err.message),
 );
 
 worker.on("error", (err) => console.error("[worker] error:", err.message));
@@ -41,6 +66,25 @@ const runRecovery = async () => {
 void runRecovery();
 const recoveryTimer = setInterval(runRecovery, recoveryIntervalMs);
 
+const retentionIntervalMs =
+  Number(process.env.RETENTION_INTERVAL_MS) || 6 * 60 * 60 * 1000;
+const runRetentionSafely = async () => {
+  try {
+    const result = await runRetention();
+    if (result.expiredClips > 0 || result.orphans > 0)
+      console.log(
+        `[worker] Retention: ${result.expiredClips} clip(s) expired, ${result.orphans} orphan object(s) removed`,
+      );
+  } catch (err) {
+    console.error(
+      "[worker] Retention failed:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+};
+void runRetentionSafely();
+const retentionTimer = setInterval(runRetentionSafely, retentionIntervalMs);
+
 console.log(
   `[worker] Listening on "${SEGMENT_QUEUE_NAME}" (concurrency ${concurrency})`,
 );
@@ -51,7 +95,10 @@ const shutdown = async (signal: string) => {
   shuttingDown = true;
   console.log(`[worker] ${signal} received, shutting down...`);
   clearInterval(recoveryTimer);
+  clearInterval(retentionTimer);
   await worker.close(); // waits for the running job to finish
+  await mediaWorker.close();
+  await closeMediaQueue();
   await connection.quit().catch(() => {});
   await closeSegmentQueue();
   await prisma.$disconnect();
