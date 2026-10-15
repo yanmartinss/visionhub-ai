@@ -34,6 +34,7 @@ import SegmentProgress from "../components/SegmentProgress";
 import DaySummaryCard, { DaySummaryHeading } from "../components/DaySummaryCard";
 import AddSegmentForm from "../components/AddSegmentForm";
 import EventStatusSelect from "../components/EventStatusSelect";
+import DayTimeline from "../components/DayTimeline";
 import EventDetailDialog from "../components/EventDetailDialog";
 
 function coverageIssueText(issue: CoverageIssue): string {
@@ -67,7 +68,12 @@ function RecordingDetail({ id }: { id: string }) {
   // only when reprocess is attempted (409), so the id is remembered here.
   const [needsResend, setNeedsResend] = useState<Set<string>>(new Set());
 
+  // Clips/thumbnails are generated in the background after the day finishes:
+  // keep polling for a while (not forever) while some event lacks them.
+  const [mediaPolls, setMediaPolls] = useState(0);
+
   const showDay = useCallback((data: [RecordingDayDetail, DetectedEvent[]]) => {
+    setMediaPolls((count) => count + 1);
     setDay(data[0]);
     setEvents(data[1]);
     setError(null);
@@ -113,13 +119,21 @@ function RecordingDetail({ id }: { id: string }) {
     [id, showDay, showError],
   );
 
-  usePolling(refresh, 5000, Boolean(day?.segments.some(isInFlight)));
+  const waitingMedia =
+    mediaPolls <= 12 &&
+    events.some((event) => event.thumbnailPath === null || event.clipPath === null);
+  usePolling(
+    refresh,
+    5000,
+    Boolean(day?.segments.some(isInFlight)) || waitingMedia,
+  );
 
   async function reprocess(segmentId: string) {
     setBusyId(segmentId);
     setError(null);
     try {
       await apiFetch(`/segments/${segmentId}/reprocess`, { method: "POST" });
+      setMediaPolls(0);
       await refresh();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
@@ -345,6 +359,15 @@ function RecordingDetail({ id }: { id: string }) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {events.length > 0 && (
+        <>
+          <h2 className="mt-8 font-serif text-lg font-bold text-slate-900">
+            Linha do tempo
+          </h2>
+          <DayTimeline events={events} onOpen={setDetailId} />
+        </>
       )}
 
       <h2 className="mt-8 font-serif text-lg font-bold text-slate-900">
