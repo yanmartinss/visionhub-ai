@@ -24,6 +24,7 @@ function useNavEntries(): NavEntry[] {
   const { user } = useAuth();
   const entries: NavEntry[] = [
     { to: "/dashboard", label: "Início" },
+    { to: "/history", label: "Histórico" },
     { to: "/recordings", label: "Gravações" },
   ];
 

@@ -188,3 +188,9 @@ export type DashboardData = {
   }[];
   latestEvents: EventListItem[];
 };
+
+// `GET /recording-days/:id/summary` (Fatia F, docs/agentes/README.md 3.2).
+export type DaySummary = {
+  generatedText: string;
+  createdAt: string;
+};

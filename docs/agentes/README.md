@@ -207,9 +207,10 @@ type EventListItem = {
 
 ### Frontend
 
-- [ ] **D** — dashboard real e histórico de eventos conforme `docs/wireframes/` (US05, US06).
+- [x] **D** — dashboard real e histórico de eventos conforme `docs/wireframes/` (US05, US06),
+      já consumindo a API real.
 - [ ] Timeline do dia com thumbnail e clipe (US20) — depende da Fatia E.
-- [ ] Exibir o resumo do dia (US08) — depende da Fatia F.
+- [x] Exibir o resumo do dia (US08) — consome `GET /api/recording-days/:id/summary`.
 - [ ] "Por que este evento foi gerado" (US33) e tela de precisão (US34).
 - [ ] Manter o padrão atual: polling (`hooks/usePolling.ts`), mensagens em `lib/messages.ts`,
       datas de lote em UTC, busca de dados no efeito com `.then` (regra de lint).

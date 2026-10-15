@@ -162,9 +162,19 @@ Seção "Eventos" e faixa de avisos de cobertura na tela de gravações (Fatia C
 `components/AddSegmentForm.tsx` tenta `lib/infer-started-at.ts` ao escolher o arquivo e
 pré-preenche "Horário de início" com um aviso (sempre editável).
 
-Ainda não há **dashboard/histórico** reais (wireframes em `docs/wireframes/`; isso é a Fatia D
-— a lista/seção de eventos da Fatia C é só dentro do detalhe de um lote), clipes visíveis nem
-resumo do dia.
+Dashboard e histórico (Fatia D, front): `pages/DashboardPage.tsx` (`/dashboard`, `GET
+/dashboard?date`, polling de 30 s enquanto há lote processando) e `pages/HistoryPage.tsx`
+(`/history`, `GET /events` paginado com filtros; o dashboard linka com `?from=&to=`). Chamadas em
+`lib/dashboard-api.ts` (sem mock; o formato é o de `docs/agentes/README.md` §3.3). Testes com
+vitest + Testing Library (`npm test` em `frontend/`, setup em `src/test/setup.ts`).
+
+Resumo do dia (Fatia F, front): `components/DaySummaryCard.tsx` mostra o texto de `GET
+/recording-days/:id/summary` (`lib/summary-api.ts`; 404 = ainda não gerado, não é erro) no
+dashboard (um card por lote `completed`/`partial`) e no detalhe do lote. O dashboard busca o
+resumo uma vez por lote (não refaz sozinho).
+
+Ainda não há clipes/thumbnails visíveis (Fatia E), "por que este evento" (US33) nem tela de
+precisão (US34) no front.
 
 Lint: `react-hooks/set-state-in-effect` já acusa 5 erros antigos (`CamerasTable`,
 `UsersTable`, `AccessRequestsPanel`, `GeneralSettingsPanel`); código novo deve buscar dados
@@ -433,7 +443,7 @@ tabelas e campos), `requisitos.md` (upload/link, lote do dia, retenção, LGPD) 
     de horário do segmento pelo nome do arquivo e avisos de lacuna/sobreposição na cobertura
     do dia — _feita_.
   - **D** — dashboard e histórico (wireframes em `docs/wireframes/`) — backend _feito_
-    (`GET /dashboard`, `GET /events`, `GET /events/:id`); front pendente.
+    (`GET /dashboard`, `GET /events`, `GET /events/:id`); front _feito_ (dashboard e histórico).
   - **E** — clipes/thumbnails (FFmpeg), MinIO, retenção e log de acesso (LGPD).
   - **F** — resumo do dia com Ollama.
   - **G** (última) — serviço Python de visão implementando o contrato `Detector`.

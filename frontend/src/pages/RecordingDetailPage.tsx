@@ -31,6 +31,7 @@ import {
   SegmentStatusBadge,
 } from "../components/StatusBadge";
 import SegmentProgress from "../components/SegmentProgress";
+import DaySummaryCard, { DaySummaryHeading } from "../components/DaySummaryCard";
 import AddSegmentForm from "../components/AddSegmentForm";
 import EventStatusSelect from "../components/EventStatusSelect";
 
@@ -246,6 +247,15 @@ function RecordingDetail({ id }: { id: string }) {
         </p>
       )}
 
+      {(day.status === "completed" || day.status === "partial") && (
+        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-4">
+          <DaySummaryHeading />
+          <div className="mt-2">
+            <DaySummaryCard key={day.status} recordingDayId={day.id} />
+          </div>
+        </section>
+      )}
+
       <h2 className="mt-8 font-serif text-lg font-bold text-slate-900">
         Segmentos
       </h2>
@@ -318,6 +328,15 @@ function RecordingDetail({ id }: { id: string }) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {(day.status === "completed" || day.status === "partial") && (
+        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-4">
+          <DaySummaryHeading />
+          <div className="mt-2">
+            <DaySummaryCard key={day.status} recordingDayId={day.id} />
+          </div>
+        </section>
       )}
 
       <h2 className="mt-8 font-serif text-lg font-bold text-slate-900">
