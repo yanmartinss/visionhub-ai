@@ -4,6 +4,17 @@ export function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
+// "domingo, 20 de setembro de 2026" for a batch day (midnight UTC, see above).
+export function formatLongDay(iso: string): string {
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("pt-BR", {
     dateStyle: "short",
