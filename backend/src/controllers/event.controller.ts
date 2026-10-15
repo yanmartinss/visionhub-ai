@@ -17,6 +17,19 @@ export const listEvents: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const getEvent: RequestHandler = async (req, res, next) => {
+  const params = uuidParamSchema.safeParse(req.params);
+  if (!params.success)
+    return res.status(400).json({ error: "Invalid event id" });
+
+  try {
+    const event = await eventService.getEventDetail(params.data.id);
+    return res.status(200).json(event);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const updateEventStatus: RequestHandler = async (req, res, next) => {
   const params = uuidParamSchema.safeParse(req.params);
   if (!params.success)

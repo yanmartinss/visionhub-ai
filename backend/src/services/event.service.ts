@@ -1,4 +1,5 @@
 import { AppError } from "../lib/app-error.ts";
+import { EVENT_TYPE_REQUIREMENTS } from "../lib/event-types.ts";
 import { prisma } from "../lib/prisma.ts";
 import type { ListEventsFilters } from "../schemas/list-events-schema.ts";
 import type {
@@ -96,6 +97,62 @@ export const listEvents = async (filters: ListEventsFilters) => {
     total,
     page: filters.page,
     pageSize: filters.pageSize,
+  };
+};
+
+// "Why was this event generated" (US33): the detector label and area
+// containment the event type relies on, plus the camera's *current* rule and
+// areas of that type. Which area actually matched is not stored (containment
+// is checked in Passo A, per detection), so every area of the type is listed.
+export const getEventDetail = async (eventId: string) => {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: {
+      ...eventListSelect,
+      cameraId: true,
+      segment: {
+        select: {
+          id: true,
+          startedAt: true,
+          recordingDay: { select: { id: true, date: true } },
+        },
+      },
+    },
+  });
+  if (!event) throw new AppError(404, "Event not found");
+
+  const { cameraId, segment, ...listRow } = event;
+  const requirements = EVENT_TYPE_REQUIREMENTS[event.type];
+
+  const [rule, areas] = await Promise.all([
+    prisma.rule.findUnique({
+      where: { cameraId_eventType: { cameraId, eventType: event.type } },
+      select: { timeLimitSeconds: true, active: true },
+    }),
+    requirements.areaType
+      ? prisma.area.findMany({
+          where: { cameraId, type: requirements.areaType },
+          select: { id: true, type: true, polygon: true },
+          orderBy: { createdAt: "asc" },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  return {
+    ...toEventListItem({ ...listRow, segment }),
+    detectionLabel: requirements.detectionLabel,
+    containment: requirements.containment,
+    rule,
+    areas,
+    segment: segment ? { id: segment.id, startedAt: segment.startedAt } : null,
+    offsetSec: segment
+      ? Math.max(
+          0,
+          Math.round(
+            (event.startedAt.getTime() - segment.startedAt.getTime()) / 1000,
+          ),
+        )
+      : null,
   };
 };
 
