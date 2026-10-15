@@ -116,8 +116,9 @@ começar com mock no mesmo formato.
 
 ### IA local
 
-- [ ] **F** — serviço `ollama` no compose, `lib/ollama.ts`, prompt em pt-BR a partir dos eventos
+- [x] **F** — serviço `ollama` no compose, `lib/ollama.ts`, prompt em pt-BR a partir dos eventos
       do dia (tipos, horários, status), `daily-summary.service.ts` gravando `DailySummary` (US08).
+      Falta só o lado do backend (gancho + rota, seção 6) para o resumo aparecer de ponta a ponta.
 - [ ] **G** — serviço `vision/` (FastAPI + Ultralytics YOLO + OpenCV + FFmpeg, Dockerfile
       próprio): amostrar ~1 frame a cada 1–2 s em streaming (nunca carregar o vídeo inteiro),
       rodar YOLO, mapear classes → labels do contrato (3.1), devolver `Detection[]`.
