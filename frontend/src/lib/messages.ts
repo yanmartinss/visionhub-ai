@@ -43,6 +43,7 @@ const API_MESSAGES: Record<string, string> = {
   "Invalid event id": "Evento inválido.",
   "Invalid event status": "Status de evento inválido.",
   "Event not found": "Evento não encontrado.",
+  "Media not found": "A mídia deste evento não está disponível.",
   "Invalid filters": "Filtros inválidos. Confira o período escolhido.",
   "Invalid date": "Data inválida.",
 };

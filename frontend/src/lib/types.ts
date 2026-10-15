@@ -194,3 +194,17 @@ export type DaySummary = {
   generatedText: string;
   createdAt: string;
 };
+
+// `GET /events/:id` (US33, docs/agentes/README.md section 3.3).
+export type EventDetail = EventListItem & {
+  detectionLabel: string | null;
+  // Center of the box inside/outside the areas of the required type;
+  // null = whole camera.
+  containment: "inside" | "outside" | null;
+  // The camera's CURRENT rule for the type, not the one at detection time.
+  rule: { timeLimitSeconds: number | null; active: boolean } | null;
+  // All areas of the required type (the API does not record which one fired).
+  areas: { id: string; type: AreaType; polygon: AreaPoint[] }[];
+  segment: { id: string; startedAt: string } | null;
+  offsetSec: number | null;
+};

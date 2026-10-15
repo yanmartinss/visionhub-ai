@@ -20,6 +20,7 @@ import {
   EventTypeBadge,
 } from "../components/StatusBadge";
 import EventStatusSelect from "../components/EventStatusSelect";
+import EventDetailDialog from "../components/EventDetailDialog";
 
 const PAGE_SIZE = 20;
 
@@ -215,6 +216,7 @@ function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [cameras, setCameras] = useState<CameraChoice[]>([]);
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const load = useCallback(
     (key: string) =>
@@ -359,7 +361,14 @@ function HistoryPage() {
                         />
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <td className="space-x-3 whitespace-nowrap px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setDetailId(event.id)}
+                        className="cursor-pointer text-sm font-semibold text-slate-900 underline"
+                      >
+                        Detalhes
+                      </button>
                       {event.recordingDay && (
                         <Link
                           to={`/recordings/${event.recordingDay.id}`}
@@ -400,6 +409,13 @@ function HistoryPage() {
             </div>
           </div>
         </>
+      )}
+
+      {detailId && (
+        <EventDetailDialog
+          eventId={detailId}
+          onClose={() => setDetailId(null)}
+        />
       )}
     </div>
   );

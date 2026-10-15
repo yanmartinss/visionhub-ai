@@ -39,6 +39,7 @@ import {
   EventTypeBadge,
 } from "../components/StatusBadge";
 import EventStatusSelect from "../components/EventStatusSelect";
+import EventDetailDialog from "../components/EventDetailDialog";
 import SegmentProgress from "../components/SegmentProgress";
 
 const EVENT_ICON: Record<EventType, LucideIcon> = {
@@ -104,11 +105,13 @@ function EventCard({
   isToday,
   busy,
   onStatusChange,
+  onOpenDetail,
 }: {
   event: EventListItem;
   isToday: boolean;
   busy: boolean;
   onStatusChange: (status: EventStatus) => void;
+  onOpenDetail: () => void;
 }) {
   const Icon = EVENT_ICON[event.type];
   const label = EVENT_TYPE_INFO[event.type].label;
@@ -143,6 +146,13 @@ function EventCard({
               disabled={busy}
               onChange={onStatusChange}
             />
+            <button
+              type="button"
+              onClick={onOpenDetail}
+              className="cursor-pointer text-xs font-semibold text-slate-700 underline hover:text-slate-900"
+            >
+              Detalhes
+            </button>
             {event.recordingDay && (
               <Link
                 to={`/recordings/${event.recordingDay.id}`}
@@ -167,6 +177,7 @@ function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const showData = useCallback((dashboard: DashboardData) => {
     setData(dashboard);
@@ -389,6 +400,7 @@ function DashboardPage() {
                         onStatusChange={(status) =>
                           void changeEventStatus(event.id, status)
                         }
+                        onOpenDetail={() => setDetailId(event.id)}
                       />
                     ))}
                   </ul>
@@ -521,6 +533,13 @@ function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {detailId && (
+        <EventDetailDialog
+          eventId={detailId}
+          onClose={() => setDetailId(null)}
+        />
       )}
     </div>
   );

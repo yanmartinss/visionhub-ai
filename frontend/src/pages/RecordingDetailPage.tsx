@@ -34,6 +34,7 @@ import SegmentProgress from "../components/SegmentProgress";
 import DaySummaryCard, { DaySummaryHeading } from "../components/DaySummaryCard";
 import AddSegmentForm from "../components/AddSegmentForm";
 import EventStatusSelect from "../components/EventStatusSelect";
+import EventDetailDialog from "../components/EventDetailDialog";
 
 function coverageIssueText(issue: CoverageIssue): string {
   if (issue.type === "unknown") {
@@ -61,6 +62,7 @@ function RecordingDetail({ id }: { id: string }) {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   // Upload segments whose original was removed (retention): the API tells us
   // only when reprocess is attempted (409), so the id is remembered here.
   const [needsResend, setNeedsResend] = useState<Set<string>>(new Set());
@@ -361,6 +363,9 @@ function RecordingDetail({ id }: { id: string }) {
                 <th className="px-4 py-3">Horário</th>
                 <th className="hidden px-4 py-3 sm:table-cell">Confiança</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">
+                  <span className="sr-only">Detalhes</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -408,11 +413,27 @@ function RecordingDetail({ id }: { id: string }) {
                       />
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setDetailId(event.id)}
+                      className="cursor-pointer text-sm font-semibold text-slate-900 underline"
+                    >
+                      Detalhes
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {detailId && (
+        <EventDetailDialog
+          eventId={detailId}
+          onClose={() => setDetailId(null)}
+        />
       )}
 
       {canManage && (
