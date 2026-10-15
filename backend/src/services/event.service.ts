@@ -190,3 +190,8 @@ export const getEventMediaKey = async (
   if (!key) throw new AppError(404, "Media not found");
   return key;
 };
+
+// LGPD: one row per clip request that resolved to existing media. Thumbnails
+// are not logged (they load in bulk on every list); the clip is the footage.
+export const recordClipAccess = (userId: string, eventId: string) =>
+  prisma.mediaAccessLog.create({ data: { userId, eventId } });

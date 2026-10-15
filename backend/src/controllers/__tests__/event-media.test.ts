@@ -3,9 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppError } from "../../lib/app-error.ts";
 
 const getEventMediaKey = vi.fn();
+const recordClipAccess = vi.fn();
 const getObjectStream = vi.fn();
 
-vi.mock("../../services/event.service.ts", () => ({ getEventMediaKey }));
+vi.mock("../../services/event.service.ts", () => ({
+  getEventMediaKey,
+  recordClipAccess,
+}));
 vi.mock("../../lib/object-storage.ts", () => ({
   getObjectStream,
   isMissingObject: (err: unknown) =>
@@ -15,6 +19,7 @@ vi.mock("../../lib/object-storage.ts", () => ({
 const { getEventClip } = await import("../event.controller.ts");
 
 const ID = "5d2c4a52-0f0e-4b53-9a53-7f3d3c0c2c11";
+const USER = "9b1c7a0e-1111-4222-8333-444455556666";
 
 const makeRes = () => {
   const chunks: Buffer[] = [];
@@ -36,12 +41,19 @@ const makeRes = () => {
 const run = async (id: string) => {
   const { res, headers, chunks } = makeRes();
   const next = vi.fn();
-  await getEventClip({ params: { id } } as never, res as never, next);
+  await getEventClip(
+    { params: { id }, user: { id: USER } } as never,
+    res as never,
+    next,
+  );
   await new Promise((r) => setImmediate(r));
   return { res, headers, chunks, next };
 };
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  recordClipAccess.mockResolvedValue(undefined);
+});
 
 describe("GET /events/:id/clip", () => {
   it("rejects a malformed id with 400", async () => {
@@ -61,6 +73,25 @@ describe("GET /events/:id/clip", () => {
     expect(headers["Content-Type"]).toBe("video/mp4");
     expect(headers["Cache-Control"]).toBe("private, no-store");
     expect(Buffer.concat(chunks).toString()).toBe("video-bytes");
+  });
+
+  it("records who opened the clip", async () => {
+    getEventMediaKey.mockResolvedValue("events/x/clip.mp4");
+    getObjectStream.mockResolvedValue({
+      stream: Readable.from([Buffer.from("v")]),
+      contentType: "video/mp4",
+      contentLength: 1,
+    });
+    await run(ID);
+    expect(recordClipAccess).toHaveBeenCalledWith(USER, ID);
+  });
+
+  it("does not serve the clip when the audit row cannot be written", async () => {
+    getEventMediaKey.mockResolvedValue("events/x/clip.mp4");
+    recordClipAccess.mockRejectedValue(new Error("db down"));
+    const { next } = await run(ID);
+    expect(next).toHaveBeenCalled();
+    expect(getObjectStream).not.toHaveBeenCalled();
   });
 
   it("forwards 404 when the event has no media", async () => {

@@ -33,6 +33,7 @@ model User {
   updatedAt           DateTime  @default(now()) @updatedAt
 
   recordingDays RecordingDay[]
+  mediaAccesses MediaAccessLog[]
 }
 
 enum StatusRequest {
@@ -252,4 +253,20 @@ model Condominium {
   state        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
+}
+
+// LGPD audit trail: who opened which event clip, and when. `eventId` is a plain
+// column (no FK) so the trail survives the event being removed by a
+// refinalization or by retention; `userId` is a FK because users are only
+// deactivated, never deleted.
+model MediaAccessLog {
+  id        String   @id @default(uuid())
+  userId    String
+  eventId   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([eventId, createdAt])
+  @@index([userId, createdAt])
 }

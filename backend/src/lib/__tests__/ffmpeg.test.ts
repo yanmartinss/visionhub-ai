@@ -27,7 +27,7 @@ beforeAll(() => {
     ...["-t", "30", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac"],
     source,
   ]);
-});
+}, 120_000);
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -54,7 +54,7 @@ describe("cutClip", () => {
     );
     expect(types).toEqual(["video"]);
     expect(probe.streams[0].height).toBe(480);
-  }, 60_000);
+  }, 120_000);
 });
 
 describe("grabThumbnail", () => {

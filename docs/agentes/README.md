@@ -196,9 +196,10 @@ type EventListItem = {
 ### Backend
 
 - [x] **D** — endpoints de dashboard e histórico (US05, US06) e detalhe do evento (US33).
-- [ ] **E** — FFmpeg: corte do clipe (10 s antes/depois) comprimido + thumbnail; MinIO no
+- [x] **E** — FFmpeg: corte do clipe (10 s antes/depois) comprimido + thumbnail; MinIO no
       compose e cliente S3 (`clipPath`/`thumbnailPath` = object key); apagar o original após a
-      finalização; retenção dos clipes após X dias; log de acesso aos clipes (LGPD) (US20–US23).
+      finalização; retenção dos clipes após X dias (feitos); log de acesso aos clipes (LGPD, tabela
+      `MediaAccessLog`, só `GET /events/:id/clip`) (US20–US23).
 - [x] Disparar `generateDailySummary` ao concluir o lote, `completed` ou `partial` (gancho da
       Fatia F, contrato 3.2).
 - [ ] US34 — métricas de precisão (eventos marcados como falso positivo, por tipo).

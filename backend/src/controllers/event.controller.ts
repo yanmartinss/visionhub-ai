@@ -61,6 +61,9 @@ const serveMedia =
 
     try {
       const key = await eventService.getEventMediaKey(params.data.id, kind);
+      // Fail closed: no audit row, no footage.
+      if (kind === "clip" && req.user)
+        await eventService.recordClipAccess(req.user.id, params.data.id);
       const media = await getObjectStream(key);
 
       res.status(200);
