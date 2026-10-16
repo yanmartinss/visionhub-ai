@@ -87,7 +87,8 @@ Endpoints de lote/segmento (prefixo `/api`; escrita só para gestores, leitura p
 | `POST /recording-days/:id/segments/link`          | anexa segmento por link (https + domínios permitidos)                                        |
 | `POST /recording-days/:id/segments/upload`        | anexa segmento por upload multipart em streaming (hash SHA-256; reenvio não duplica)         |
 | `POST /segments/:id/reprocess`                    | reprocessa um segmento `failed` ou `completed` (redetecta sem reenviar o arquivo)            |
-| `PATCH /events/:id`                               | muda o status de um evento (`pending`/`inProgress`/`resolved`; qualquer usuário autenticado) |
+| `PATCH /events/:id`                               | muda o status de um evento (`pending`/`inProgress`/`resolved`/`falsePositive`; qualquer usuário autenticado) |
+| `GET /recording-days/:id/summary`                 | resumo do dia em linguagem natural (404 = ainda não gerado)                                  |
 
 Endpoints de dashboard e histórico (somente leitura, qualquer usuário autenticado; formato completo em
 `docs/agentes/README.md` §3.3). As datas são a **data do lote** (`RecordingDay.date`), não o horário do evento:
@@ -98,6 +99,14 @@ sem conversão de fuso e coerente com a tela de gravações.
 | `GET /dashboard?date`    | painel do dia (padrão: hoje em `America/Sao_Paulo`): contadores por tipo/status, total do dia anterior, eventos em aberto, câmeras, lotes e últimos eventos |
 | `GET /events`            | histórico paginado; filtros `from`/`to` (data do lote), `type`, `cameraId`, `status`; `page`/`pageSize`                                                 |
 | `GET /events/:id`        | detalhe "por que este evento": rótulo do detector, contenção, regra e áreas atuais do tipo, duração, confiança, segmento e posição no vídeo             |
+
+Endpoints de mídia e métricas (somente leitura, `requireAuth`, exceto onde indicado):
+
+| Rota                                  | Função                                                                                                                       |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `GET /events/:id/clip`                | bytes do clipe (`video/mp4`); cada acesso é registrado em `mediaAccessLogs` (LGPD); `404` se ainda não gerado ou expirado     |
+| `GET /events/:id/thumbnail`           | bytes da miniatura (`image/jpeg`)                                                                                            |
+| `GET /stats/accuracy` (**admin**)     | precisão por tipo de evento: `resolved / (resolved + falsePositive)`, a partir da triagem feita pelos usuários (US34)         |
 
 ### 4. Fila (BullMQ + Redis)
 
@@ -123,15 +132,26 @@ sem conversão de fuso e coerente com a tela de gravações.
 ### 5. Armazenamento de objetos (MinIO)
 
 - Compatível com S3. Guarda clipes comprimidos e thumbnails dos eventos; `events.clipPath` e `events.thumbnailPath` guardam a _object key_.
-- Vídeos originais e uploads temporários ficam em disco local (`storage/`, fora do git) só até serem processados.
+- Vídeos originais e uploads temporários ficam em disco local (`storage/`, fora do git) só até serem processados; o original é apagado depois da finalização do lote e dos clipes.
+- **Clipes e thumbnails** são gerados por uma fila própria (`media-queue`, FFmpeg) **depois** da finalização do lote: H.264 sem áudio, até 480p, janela de 10 s antes/depois do evento. O evento aparece antes da mídia (`hasClip`/`hasThumbnail` falsos por alguns instantes).
+- **Retenção:** um job periódico apaga os clipes após `CLIP_RETENTION_DAYS` (padrão 30; 0 desliga) e varre objetos órfãos; eventos e thumbnails permanecem.
+- **LGPD:** só o acesso ao clipe é registrado (`mediaAccessLogs`: quem e quando). Reprocessar um segmento de upload cujo original já foi apagado exige reenviar o mesmo arquivo (`409` caso contrário); segmentos de link são baixados de novo.
 
 ### 6. Geração de linguagem natural (Ollama)
 
 - Roda localmente (Llama, Gemma ou Qwen).
-- Disparada quando o lote fica `completed`. Recebe a lista de eventos técnicos do dia e produz um texto em linguagem natural, por exemplo:
+- Disparada, sem `await`, quando o lote fica `completed` **ou `partial`** (em `partial` o texto avisa da cobertura incompleta) e a cada refinalização (upsert em `dailySummaries`). Os fatos (tipos, horários, durações, status) são montados pelo código; o modelo só redige. Dia sem eventos recebe texto fixo, sem chamar o modelo. Recebe a lista de eventos técnicos do dia e produz um texto em linguagem natural, por exemplo:
   > "Durante o dia foram detectados dois episódios em que o portão principal permaneceu aberto por mais de três minutos, um carro estacionado por tempo excessivo na área de manobra e nenhum acesso à área restrita."
 
-### 7. Frontend (React + Vite + Tailwind)
+### 7. Notificações por e-mail (US37)
+
+- `lib/mailer.ts` (nodemailer/SMTP) e `services/notification.service.ts`. Sem SMTP configurado, só há log. Falha de envio nunca afeta o lote (disparo sem `await`).
+- Destinatários: usuários **ativos** com perfil gestor ou administrador (um condomínio no MVP), em cópia oculta.
+- **Resumo do dia:** enviado uma vez por lote, depois que o texto é salvo (`dailySummaries.emailedAt` evita duplicar em refinalizações; se o envio falhar, tenta de novo na próxima).
+- **Alerta grave:** `childRunning`, `restrictedArea` e `occupancy`, enviado uma vez, na **criação** do evento (atualizações na refinalização não reenviam). Os demais tipos aparecem só no resumo.
+- Conteúdo mínimo: tipo, câmera, horário e link para o sistema; sem imagem, clipe nem dados pessoais.
+
+### 8. Frontend (React + Vite + Tailwind)
 
 - Envio de gravação (upload/link, câmera, data, horário inicial).
 - Lista de lotes do dia com status e progresso por segmento (via polling; Socket.IO opcional só para progresso).
@@ -139,10 +159,10 @@ sem conversão de fuso e coerente com a tela de gravações.
 - Resumo do dia gerado por IA.
 - Configuração de regras (tempo máximo de portão aberto, áreas restritas etc.).
 
-### 8. Infraestrutura
+### 9. Infraestrutura
 
 - Cada componente roda em um container: frontend, backend (API), worker, serviço de visão, PostgreSQL, Redis, MinIO e Ollama.
-- Orquestrado via Docker Compose. Hoje o `docker-compose.yml` só define o PostgreSQL; Redis, MinIO, worker, visão e Ollama entram nas etapas correspondentes.
+- Orquestrado via Docker Compose. O `docker-compose.yml` define PostgreSQL, Redis, MinIO, Ollama e o serviço de visão (`vision/`, Python); a API e o worker rodam no host. `DETECTOR=simulated` continua o padrão; `DETECTOR=python` + `VISION_URL` usa o serviço de visão.
 
 ## Fonte de vídeo
 

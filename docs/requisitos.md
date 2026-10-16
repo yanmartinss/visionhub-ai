@@ -24,6 +24,8 @@
 | RF16 | O sistema deve guardar apenas clipes comprimidos dos eventos (ex.: 10 s antes e depois) e thumbnails, descartando o vídeo original após o processamento.                   | Alta       |
 | RF17 | O sistema deve apagar os clipes após um período de retenção configurável, mantendo eventos e thumbnails.                                                                   | Média      |
 | RF18 | O reenvio do mesmo arquivo/segmento não deve duplicar eventos (idempotência por hash do arquivo).                                                                          | Média      |
+| RF19 | O sistema deve enviar por e-mail aos gestores e administradores o resumo do dia (uma vez por lote) e os alertas graves (criança correndo, área restrita, permanência suspeita), sem dados pessoais além do necessário. | Média      |
+| RF20 | O usuário deve poder marcar um evento como falso positivo; o administrador vê a precisão por tipo de evento (confirmados / (confirmados + falsos positivos)). | Média      |
 
 ## Requisitos Não Funcionais (RNF)
 

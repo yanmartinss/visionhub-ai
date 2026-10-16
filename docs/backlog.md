@@ -90,9 +90,10 @@ Trabalho por fatia (backend + frontend juntos), uma por vez, com revisão ao fin
 | Sprint 2 | **Fatia A** — telas de envio de gravações e lotes (US15–US19, front) ✅                                                 |
 | Sprint 3 | **Fatia B** — regras e áreas: CRUD, novos tipos de evento, editor de áreas (US09, US10) ✅                              |
 | Sprint 4 | **Fatia C** — detector simulado, regras, fusão entre segmentos, eventos e alertas (US01–US04, US07, US11–US14) ✅       |
-| Sprint 5 | **Fatia D** — dashboard e histórico (US05, US06)                                                                        |
-| Sprint 6 | **Fatia E** — clipes/thumbnails, MinIO, retenção e LGPD (US20–US23)                                                     |
-| Sprint 7 | **Fatia F** — resumo do dia com Ollama (US08)                                                                           |
+| Sprint 5 | **Fatia D** — dashboard e histórico (US05, US06) ✅                                                                     |
+| Sprint 6 | **Fatia E** — clipes/thumbnails, MinIO, retenção e LGPD (US20–US23) ✅                                                  |
+| Sprint 7 | **Fatia F** — resumo do dia com Ollama (US08) ✅                                                                        |
+| Extra    | **US34** precisão por tipo (`falsePositive`) ✅ · **US37** e-mail do resumo e de alertas graves ✅ (backend)           |
 | Sprint 8 | **Fatia G** — serviço Python de visão (YOLO) no lugar do detector simulado + testes finais                              |
 
 > Ajuste os sprints conforme o cronograma da disciplina/APS.

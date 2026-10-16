@@ -225,6 +225,14 @@ type EventListItem = {
   { overall: AccuracyCounts; items: (AccuracyCounts & { type: EventType })[] } // um item por tipo
   ```
 
+### 3.4 Notificações por e-mail (backend, US37)
+
+Sem endpoint novo; só o que o front pode querer explicar ao usuário. Destinatários: usuários
+**ativos** com perfil gestor ou administrador. **Alerta grave** = evento recém-criado de tipo
+`childRunning`, `restrictedArea` ou `occupancy` (um e-mail por evento, na criação). O resumo do dia
+é enviado uma vez por lote após ser gerado (`DailySummary.emailedAt`). SMTP via `SMTP_*`/`MAIL_FROM`
+(sem SMTP, só log). Lista em `services/notification.service.ts#SEVERE_EVENT_TYPES`.
+
 ## 4. O que falta, por agente
 
 ### Backend
@@ -237,8 +245,8 @@ type EventListItem = {
 - [x] Disparar `generateDailySummary` ao concluir o lote, `completed` ou `partial` (gancho da
       Fatia F, contrato 3.2).
 - [x] US34 — métricas de precisão por tipo: status `falsePositive` + `GET /api/stats/accuracy` (admin). Falta só a migration `20261015100000_event_false_positive_status` ser aplicada pelo usuário.
-- [ ] US37 — e-mail do resumo e de alertas graves via `lib/mailer.ts`.
-- [ ] Manter `docs/arquitetura.md`, `docs/database.md`, `docs/requisitos.md` coerentes.
+- [x] US37 — e-mail do resumo e de alertas graves via `lib/mailer.ts` (definição de "alerta grave" na seção 3.4). Falta só a migration `20261016090000_daily_summary_emailed_at` ser aplicada pelo usuário.
+- [x] Manter `docs/arquitetura.md`, `docs/database.md`, `docs/requisitos.md` coerentes.
 
 ### Frontend
 
