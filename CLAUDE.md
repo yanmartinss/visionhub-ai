@@ -342,6 +342,17 @@ Endpoints só de leitura, `requireAuth` (qualquer papel); formato completo (incl
 - Pendente no backend (seção 6 do README de agentes): disparo sem `await` após a finalização e
   `GET /api/recording-days/:id/summary`.
 
+### Serviço de visão Python (Fatia G — agente IA local)
+
+`vision/` (FastAPI + Ultralytics YOLO `yolov8n.pt` + OpenCV, Dockerfile próprio, serviço `vision`
+no compose com `STORAGE_DIR` montado só leitura). Ativar: `docker compose up -d vision` e, no
+`backend/.env`, `DETECTOR=python` + `VISION_URL=http://localhost:8000`. Emite `person`, `car`,
+`object` (classes COCO) e `child_running` (heurística de pessoa pequena e rápida); **não emite
+`gate_open` nem `pet_waste`** (sem modelo treinado) e não rastreia objeto abandonado — esses
+casos seguem só com `DETECTOR=simulated`. `vision/scripts/compare_detectors.py <segmentId>`
+compara o `python` com a fixture simulada; a validação com trecho real de 10–30 min ainda não foi
+feita. Detalhes e limitações em `docs/agentes/README.md` §3.1.
+
 Variáveis de ambiente novas (`backend/.env`, não versionado):
 
 - `STORAGE_DIR` — raiz de `uploads/` e `tmp/` (default `storage`, relativo ao `backend/`).

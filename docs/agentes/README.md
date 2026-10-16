@@ -63,6 +63,20 @@ type Detector = (input: { segmentId: string; filePath: string }) => Promise<Dete
 - Troca do detector: `DETECTOR=python` + `VISION_URL` (ex.: `http://localhost:8000`). O
   `simulated` continua sendo o default até a Fatia G ser aprovada.
 - Erro do serviço = exceção no `Detector` → o segmento segue o fluxo normal de retentativa.
+- **Como o `python` deriva cada label (Fatia G) e limitações conhecidas:**
+  - `person`, `car` (car/motorcycle/bus/truck) e `object` (mochila, bolsa, mala, guarda-chuva,
+    garrafa, bola) vêm direto das classes COCO do YOLO (`yolov8n.pt`, CPU, ~1 frame a cada 1,5 s).
+  - `child_running`: heurística (`person` de caixa pequena e rápida entre amostras, `tracking.py`,
+    sem identidade persistente); depende de ajuste (`CHILD_MAX_BOX_HEIGHT`, `RUN_SPEED_BODIES_PER_SEC`)
+    e erra com câmera distante ou adulto baixo.
+  - `gate_open` e `pet_waste`: **não implementados** (sem classe COCO; exigem modelo treinado). O
+    `python` nunca os emite — esses dois tipos só funcionam com o detector `simulated`.
+  - `abandonedObject`: o serviço não rastreia objeto individual; o backend trata qualquer `object`
+    na câmera inteira (limitação da Fatia C). Rastreamento de objeto parado ficaria em `tracking.py`.
+  - Validação: `vision/scripts/compare_detectors.py <segmentId>` compara os intervalos do
+    `python` com a fixture simulada do mesmo segmento. **Ainda não rodado** com trecho real de
+    10–30 min (sem Docker/Python no ambiente do agente); `docker compose up -d vision`,
+    `DETECTOR=python` e `VISION_URL=http://localhost:8000` no `backend/.env`.
 
 ### 3.2 Resumo do dia (IA local ↔ backend)
 
@@ -241,12 +255,12 @@ type EventListItem = {
 - [x] **F** — serviço `ollama` no compose, `lib/ollama.ts`, prompt em pt-BR a partir dos eventos
       do dia (tipos, horários, status), `daily-summary.service.ts` gravando `DailySummary` (US08).
       Falta só o lado do backend (gancho + rota, seção 6) para o resumo aparecer de ponta a ponta.
-- [ ] **G** — serviço `vision/` (FastAPI + Ultralytics YOLO + OpenCV + FFmpeg, Dockerfile
+- [x] **G** — serviço `vision/` (FastAPI + Ultralytics YOLO + OpenCV + FFmpeg, Dockerfile
       próprio): amostrar ~1 frame a cada 1–2 s em streaming (nunca carregar o vídeo inteiro),
       rodar YOLO, mapear classes → labels do contrato (3.1), devolver `Detection[]`.
-- [ ] **G** — `python-detector.service.ts` + ramo `python` em `lib/detector.ts`.
+- [x] **G** — `python-detector.service.ts` + ramo `python` em `lib/detector.ts`.
 - [ ] **G** — validar com o trecho de demo (10–30 min de gravação real) comparando com o
-      detector simulado.
+      detector simulado (roteiro: `vision/scripts/compare_detectors.py`; falta executar com vídeo real).
 
 ## 5. Ordem e dependências
 
@@ -272,7 +286,7 @@ Modelo — adicione uma linha por pedido e marque quando atendido:
 | IA → back | Rota `GET /api/recording-days/:id/summary` → `{ generatedText, createdAt }` ou 404 (`requireAuth`) | atendido |
 | back → front | `POST /api/segments/:id/reprocess` passa a responder `409` `"Original file was removed after processing; send it again to reprocess"` em segmento **de upload** `completed`/`failed` cujo original já foi apagado (Fatia E, retenção). Esconder/explicar o botão "Reprocessar" nesses casos; para reprocessar, reenviar o **mesmo** arquivo (`POST .../segments/upload`, devolve `202` e reaproveita o segmento). Segmentos de **link** continuam reprocessáveis (o worker baixa de novo). | aberto |
 | back → front | Novo status `falsePositive` em `EventStatus` (PATCH/lista/`byStatus`) e `GET /api/stats/accuracy` (admin, formato na seção 3.3). Adicionar a opção "Falso positivo" no `<select>` de triagem, `EventStatusBadge`, filtro do histórico, tipo `byStatus` do dashboard, mensagens, e a tela de precisão (US34). | aberto |
-| back → IA | `daily-summary.service.ts`: `STATUS_LABELS: Record<EventStatus, string>` não compila com o novo `falsePositive` (`tsc` falha). Adicionar o rótulo e tratar `falsePositive` como **não pendente** em `describePending` (hoje só `resolved` sai da lista de pendências) — ideal: não citar falso positivo como ocorrência no resumo. | aberto |
+| back → IA | `daily-summary.service.ts`: `STATUS_LABELS: Record<EventStatus, string>` não compila com o novo `falsePositive` (`tsc` falha). Adicionar o rótulo e tratar `falsePositive` como **não pendente** em `describePending` (hoje só `resolved` sai da lista de pendências) — ideal: não citar falso positivo como ocorrência no resumo. | atendido |
 
 ## 7. Fora de escopo
 
