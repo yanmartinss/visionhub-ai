@@ -28,6 +28,7 @@ const EVENT_STATUS: Record<EventStatus, { label: string; tone: string }> = {
   pending: { label: "Pendente", tone: "bg-slate-100 text-slate-700" },
   inProgress: { label: "Em andamento", tone: "bg-amber-100 text-amber-800" },
   resolved: { label: "Resolvido", tone: "bg-emerald-100 text-emerald-800" },
+  falsePositive: { label: "Falso positivo", tone: "bg-zinc-200 text-zinc-700" },
 };
 
 export function DayStatusBadge({ status }: { status: RecordingDayStatus }) {

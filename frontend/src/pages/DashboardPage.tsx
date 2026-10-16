@@ -58,6 +58,7 @@ const EVENT_CARD_TONE: Record<EventStatus, string> = {
   pending: "border-red-200 bg-red-50",
   inProgress: "border-amber-200 bg-amber-50",
   resolved: "border-slate-200 bg-white",
+  falsePositive: "border-slate-200 bg-white",
 };
 
 const CARD = "rounded-lg border border-slate-200 bg-white p-5";

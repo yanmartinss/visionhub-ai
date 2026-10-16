@@ -109,7 +109,11 @@ export type Area = {
   updatedAt: string;
 };
 
-export type EventStatus = "pending" | "inProgress" | "resolved";
+export type EventStatus =
+  | "pending"
+  | "inProgress"
+  | "resolved"
+  | "falsePositive";
 
 export type DetectedEvent = {
   id: string;

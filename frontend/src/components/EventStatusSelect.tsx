@@ -4,6 +4,7 @@ const OPTIONS: { value: EventStatus; label: string }[] = [
   { value: "pending", label: "Pendente" },
   { value: "inProgress", label: "Em andamento" },
   { value: "resolved", label: "Resolvido" },
+  { value: "falsePositive", label: "Falso positivo" },
 ];
 
 // Triage control for an event; any role may use it (`PATCH /events/:id`).

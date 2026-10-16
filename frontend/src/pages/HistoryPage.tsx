@@ -28,6 +28,7 @@ const STATUS_OPTIONS: { value: EventStatus; label: string }[] = [
   { value: "pending", label: "Pendente" },
   { value: "inProgress", label: "Em andamento" },
   { value: "resolved", label: "Resolvido" },
+  { value: "falsePositive", label: "Falso positivo" },
 ];
 
 const FILTER_INPUT =
