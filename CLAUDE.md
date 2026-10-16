@@ -173,8 +173,9 @@ Resumo do dia (Fatia F, front): `components/DaySummaryCard.tsx` mostra o texto d
 dashboard (um card por lote `completed`/`partial`) e no detalhe do lote. O dashboard busca o
 resumo uma vez por lote (não refaz sozinho).
 
-Ainda não há clipes/thumbnails visíveis (Fatia E), "por que este evento" (US33) nem tela de
-precisão (US34) no front.
+Triagem ganhou `falsePositive` ("Falso positivo") em select, badge e filtro do histórico. Tela de
+precisão por tipo (US34): `pages/AccuracyPage.tsx` em `/accuracy` (`RequireAdmin`; item "Precisão"
+no menu só para admin), `GET /stats/accuracy` via `lib/stats-api.ts`, filtro por período.
 
 Lint: `react-hooks/set-state-in-effect` já acusa 5 erros antigos (`CamerasTable`,
 `UsersTable`, `AccessRequestsPanel`, `GeneralSettingsPanel`); código novo deve buscar dados

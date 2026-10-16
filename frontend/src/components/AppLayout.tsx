@@ -33,6 +33,10 @@ function useNavEntries(): NavEntry[] {
     entries.push({ to: "/cameras", label: "Câmeras" });
   }
 
+  if (user?.role === "admin") {
+    entries.push({ to: "/accuracy", label: "Precisão" });
+  }
+
   return entries;
 }
 

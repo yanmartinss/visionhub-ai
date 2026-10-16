@@ -246,7 +246,7 @@ type EventListItem = {
       já consumindo a API real.
 - [ ] Timeline do dia com thumbnail e clipe (US20) — depende da Fatia E.
 - [x] Exibir o resumo do dia (US08) — consome `GET /api/recording-days/:id/summary`.
-- [ ] "Por que este evento foi gerado" (US33) e tela de precisão (US34).
+- [x] "Por que este evento foi gerado" (US33) e tela de precisão (US34, `/accuracy`, só admin).
 - [ ] Manter o padrão atual: polling (`hooks/usePolling.ts`), mensagens em `lib/messages.ts`,
       datas de lote em UTC, busca de dados no efeito com `.then` (regra de lint).
 
@@ -284,8 +284,8 @@ Modelo — adicione uma linha por pedido e marque quando atendido:
 | _ex.: front → back_ | _campo `cameraName` em `GET /api/events`_ | _aberto_ |
 | IA → back | Gancho: chamar `generateDailySummary(recordingDayId)` sem `await` (`.catch` + log) depois de `finalizeRecordingDay` em `completed` **e** `partial` (contrato 3.2) | atendido |
 | IA → back | Rota `GET /api/recording-days/:id/summary` → `{ generatedText, createdAt }` ou 404 (`requireAuth`) | atendido |
-| back → front | `POST /api/segments/:id/reprocess` passa a responder `409` `"Original file was removed after processing; send it again to reprocess"` em segmento **de upload** `completed`/`failed` cujo original já foi apagado (Fatia E, retenção). Esconder/explicar o botão "Reprocessar" nesses casos; para reprocessar, reenviar o **mesmo** arquivo (`POST .../segments/upload`, devolve `202` e reaproveita o segmento). Segmentos de **link** continuam reprocessáveis (o worker baixa de novo). | aberto |
-| back → front | Novo status `falsePositive` em `EventStatus` (PATCH/lista/`byStatus`) e `GET /api/stats/accuracy` (admin, formato na seção 3.3). Adicionar a opção "Falso positivo" no `<select>` de triagem, `EventStatusBadge`, filtro do histórico, tipo `byStatus` do dashboard, mensagens, e a tela de precisão (US34). | aberto |
+| back → front | `POST /api/segments/:id/reprocess` passa a responder `409` `"Original file was removed after processing; send it again to reprocess"` em segmento **de upload** `completed`/`failed` cujo original já foi apagado (Fatia E, retenção). Esconder/explicar o botão "Reprocessar" nesses casos; para reprocessar, reenviar o **mesmo** arquivo (`POST .../segments/upload`, devolve `202` e reaproveita o segmento). Segmentos de **link** continuam reprocessáveis (o worker baixa de novo). | atendido |
+| back → front | Novo status `falsePositive` em `EventStatus` (PATCH/lista/`byStatus`) e `GET /api/stats/accuracy` (admin, formato na seção 3.3). Adicionar a opção "Falso positivo" no `<select>` de triagem, `EventStatusBadge`, filtro do histórico, tipo `byStatus` do dashboard, mensagens, e a tela de precisão (US34). | atendido |
 | back → IA | `daily-summary.service.ts`: `STATUS_LABELS: Record<EventStatus, string>` não compila com o novo `falsePositive` (`tsc` falha). Adicionar o rótulo e tratar `falsePositive` como **não pendente** em `describePending` (hoje só `resolved` sai da lista de pendências) — ideal: não citar falso positivo como ocorrência no resumo. | atendido |
 
 ## 7. Fora de escopo

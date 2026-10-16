@@ -193,6 +193,29 @@ export type DashboardData = {
   latestEvents: EventListItem[];
 };
 
+// `GET /stats/accuracy` (US34, docs/agentes/README.md section 3.3). Dates
+// `YYYY-MM-DD` are the recording day's date.
+export type AccuracyFilters = {
+  from?: string;
+  to?: string;
+  cameraId?: string;
+};
+
+export type AccuracyCounts = {
+  total: number;
+  resolved: number;
+  falsePositive: number;
+  // pending + inProgress, outside the precision calculation.
+  unreviewed: number;
+  // resolved / (resolved + falsePositive); null = nothing triaged yet.
+  precision: number | null;
+};
+
+export type AccuracyReport = {
+  overall: AccuracyCounts;
+  items: (AccuracyCounts & { type: EventType })[];
+};
+
 // `GET /recording-days/:id/summary` (Fatia F, docs/agentes/README.md 3.2).
 export type DaySummary = {
   generatedText: string;

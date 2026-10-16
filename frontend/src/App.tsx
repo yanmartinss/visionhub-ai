@@ -11,7 +11,9 @@ import CamerasPage from "./pages/CamerasPage";
 import CameraRulesPage from "./pages/CameraRulesPage";
 import RecordingsPage from "./pages/RecordingsPage";
 import RecordingDetailPage from "./pages/RecordingDetailPage";
+import AccuracyPage from "./pages/AccuracyPage";
 import SettingsPage from "./pages/SettingsPage";
+import RequireAdmin from "./components/RequireAdmin";
 import RequireAuth from "./components/RequireAuth";
 import RequireManager from "./components/RequireManager";
 import AppLayout from "./components/AppLayout";
@@ -71,7 +73,15 @@ function App() {
             </RequireManager>
           }
         />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route
+          path="/accuracy"
+          element={
+            <RequireAdmin>
+              <AccuracyPage />
+            </RequireAdmin>
+          }
+        />
+        <Route path="/settings"element={<SettingsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
