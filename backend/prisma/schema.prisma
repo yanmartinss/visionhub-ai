@@ -159,6 +159,7 @@ model DailySummary {
   referenceDate  DateTime @db.Date
   generatedText  String
   recordingDayId String?  @unique
+  emailedAt      DateTime?
   createdAt      DateTime @default(now())
 
   recordingDay RecordingDay? @relation(fields: [recordingDayId], references: [id])

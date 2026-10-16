@@ -1,6 +1,10 @@
 import { segmentsAreContiguous } from "../lib/compute-coverage.ts";
 import type { EventTypeValue } from "../lib/event-types.ts";
 import { prisma } from "../lib/prisma.ts";
+import {
+  isSevereEventType,
+  notifySevereEvent,
+} from "./notification.service.ts";
 
 const EVENT_LABELS: Record<EventTypeValue, string> = {
   gateOpen: "Portão aberto",
@@ -147,6 +151,8 @@ export const finalizeRecordingDay = async (recordingDayId: string) => {
     return durationSec >= rule.timeLimitSeconds;
   });
 
+  const severeCreatedIds: string[] = [];
+
   for (const event of toKeep) {
     const durationSec = Math.round(
       (event.endedAt.getTime() - event.occurredAt.getTime()) / 1000,
@@ -202,6 +208,7 @@ export const finalizeRecordingDay = async (recordingDayId: string) => {
       await prisma.alert.create({
         data: { eventId: created.id, sentAt: new Date() },
       });
+      if (isSevereEventType(event.eventType)) severeCreatedIds.push(created.id);
     }
   }
 
@@ -223,4 +230,7 @@ export const finalizeRecordingDay = async (recordingDayId: string) => {
     // `Alert.event` has onDelete: Cascade, so this also removes their alerts.
     await prisma.event.deleteMany({ where: { id: { in: staleIds } } });
   }
+  // Only newly created events notify (a refinalization updates in place), so
+  // each severe alert is emailed once. Not awaited; failures only log.
+  for (const id of severeCreatedIds) void notifySevereEvent(id);
 };

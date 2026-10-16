@@ -97,3 +97,38 @@ export const sendPasswordReset = async (
     return false;
   }
 };
+
+// Generic notification (daily summary, severe alerts). `bcc` keeps the
+// recipients from seeing each other's addresses. Never throws: a mail failure
+// only goes to the log. Returns whether it was delivered.
+export const sendNotification = async (
+  recipients: string[],
+  subject: string,
+  text: string,
+): Promise<boolean> => {
+  if (recipients.length === 0) return false;
+
+  if (!transporter) {
+    console.log(
+      `[mailer] SMTP não configurado. Notificação "${subject}" não enviada a ${recipients.length} destinatário(s).`,
+    );
+    return false;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: MAIL_FROM || "VisionHub AI <no-reply@visionhub.ai>",
+      to: MAIL_FROM || "no-reply@visionhub.ai",
+      bcc: recipients,
+      subject,
+      text,
+    });
+    return true;
+  } catch (err) {
+    console.error(
+      `[mailer] Falha ao enviar notificação "${subject}":`,
+      err instanceof Error ? err.message : err,
+    );
+    return false;
+  }
+};

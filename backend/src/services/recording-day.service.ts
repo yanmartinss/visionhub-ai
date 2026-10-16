@@ -9,6 +9,7 @@ import type { SegmentStatus } from "../../generated/prisma/client.ts";
 import { findCameraById } from "./camera.service.ts";
 import { generateDailySummary } from "./daily-summary.service.ts";
 import { eventSelect } from "./event.service.ts";
+import { notifyDailySummary } from "./notification.service.ts";
 import { finalizeRecordingDay } from "./recording-day-finalization.service.ts";
 
 const recordingDaySelect = {
@@ -192,9 +193,13 @@ export const refreshRecordingDayStatus = async (recordingDayId: string) => {
     await finalizeRecordingDay(recordingDayId);
     // Not awaited: the model can take minutes and must not hold the worker or
     // the request. `generateDailySummary` never rejects; the catch is a guard.
-    void generateDailySummary(recordingDayId).catch((err) =>
-      console.error("[daily-summary] unexpected failure:", err),
-    );
+    // The summary email goes out once the text is saved (US37); it is a
+    // no-op when no summary was written or it was already emailed.
+    void generateDailySummary(recordingDayId)
+      .then(() => notifyDailySummary(recordingDayId))
+      .catch((err) =>
+        console.error("[daily-summary] unexpected failure:", err),
+      );
     // Clips/thumbnails run on their own queue (FFmpeg is heavy). Events that
     // already have their media are skipped by the job.
     void tryEnqueueMedia(recordingDayId);
